@@ -115,8 +115,7 @@ export default function GraphDashboard() {
   const getChartComponent = () => {
     const chartProps = {
       data: chartData,
-      options: getChartOptions(),
-      height: 400
+      options: getChartOptions()
     };
 
     switch (chartType) {
@@ -165,10 +164,12 @@ export default function GraphDashboard() {
       plugins: {
         legend: { 
           display: chartType === 'pie' || chartType === 'doughnut',
-          position: 'right' as const,
+          position: window.innerWidth < 768 ? 'bottom' as const : 'right' as const,
           labels: {
             color: isDark ? '#cbd5e1' : '#475569',
-            font: { size: 12 }
+            font: { size: window.innerWidth < 640 ? 10 : 12 },
+            boxWidth: window.innerWidth < 640 ? 10 : 12,
+            padding: window.innerWidth < 640 ? 8 : 15
           }
         },
         title: {
@@ -182,9 +183,13 @@ export default function GraphDashboard() {
           borderWidth: 1,
           cornerRadius: 12,
           displayColors: false,
+          titleFont: { size: window.innerWidth < 640 ? 12 : 14 },
+          bodyFont: { size: window.innerWidth < 640 ? 11 : 13 },
           callbacks: {
             title: function(context: any) {
-              return context[0].label;
+              const title = context[0].label;
+              // ตัดข้อความยาวสำหรับ mobile
+              return window.innerWidth < 640 && title.length > 20 ? title.substring(0, 20) + '...' : title;
             },
             label: function(context: any) {
               return `จำนวน: ${context.parsed.y || context.parsed} รายการ`;
@@ -202,7 +207,9 @@ export default function GraphDashboard() {
           x: { 
             ticks: { 
               color: isDark ? "#cbd5e1" : "#475569",
-              font: { size: 12 }
+              font: { size: window.innerWidth < 640 ? 10 : 12 },
+              maxRotation: window.innerWidth < 640 ? 45 : 0,
+              minRotation: window.innerWidth < 640 ? 45 : 0
             },
             grid: { 
               display: false 
@@ -214,7 +221,7 @@ export default function GraphDashboard() {
           y: { 
             ticks: { 
               color: isDark ? "#cbd5e1" : "#475569",
-              font: { size: 12 }
+              font: { size: window.innerWidth < 640 ? 10 : 12 }
             },
             grid: { 
               color: isDark ? "rgba(203, 213, 225, 0.1)" : "rgba(71, 85, 105, 0.1)"
@@ -226,16 +233,16 @@ export default function GraphDashboard() {
         },
         elements: {
           bar: {
-            borderRadius: 8,
+            borderRadius: window.innerWidth < 640 ? 4 : 8,
             borderSkipped: false,
           },
           line: {
             tension: 0.4,
-            borderWidth: 3,
+            borderWidth: window.innerWidth < 640 ? 2 : 3,
           },
           point: {
-            radius: 6,
-            hoverRadius: 8,
+            radius: window.innerWidth < 640 ? 4 : 6,
+            hoverRadius: window.innerWidth < 640 ? 6 : 8,
             backgroundColor: isDark ? 'rgba(255, 255, 255, 0.8)' : 'rgba(30, 41, 59, 0.8)',
             borderWidth: 2,
           }
@@ -374,20 +381,20 @@ export default function GraphDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 light:from-gray-100 light:via-gray-50 light:to-slate-100 transition-all duration-300">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-8">
         {/* Header Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-6 shadow-lg">
-            <span className="text-4xl">📊</span>
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4 sm:mb-6 shadow-lg">
+            <span className="text-2xl sm:text-4xl">📊</span>
           </div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-4">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2 sm:mb-4">
             Dashboard Analytics
           </h1>
-          <p className="text-slate-400 light:text-gray-700 text-xl max-w-2xl mx-auto transition-colors duration-300">
+          <p className="text-slate-400 light:text-gray-700 text-base sm:text-lg lg:text-xl max-w-2xl mx-auto transition-colors duration-300 px-4">
             ภาพรวมข้อมูลและสถิติการทำงาน พร้อมการวิเคราะห์แบบเรียลไทม์
           </p>
-          <div className="mt-6 flex justify-center">
-            <div className="h-1 w-32 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
+          <div className="mt-4 sm:mt-6 flex justify-center">
+            <div className="h-1 w-24 sm:w-32 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
           </div>
         </div>
         
@@ -407,57 +414,57 @@ export default function GraphDashboard() {
         )}
         
         {!loading && !error && (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 light:from-blue-50/80 light:to-blue-100/60 backdrop-blur-md rounded-2xl p-6 border border-blue-500/30 light:border-blue-200/70 shadow-xl transform transition-all duration-700 hover:scale-105 hover:shadow-2xl animate-fade-in-up">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+              <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 light:from-blue-50/80 light:to-blue-100/60 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-blue-500/30 light:border-blue-200/70 shadow-xl transform transition-all duration-700 hover:scale-105 hover:shadow-2xl animate-fade-in-up">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-blue-300 light:text-blue-800 text-sm font-medium">จำนวนหัวข้อทั้งหมด</p>
-                    <p className="text-3xl font-bold text-white light:text-gray-900 mt-1 transition-all duration-300">
+                  <div className="min-w-0 flex-1 mr-3">
+                    <p className="text-blue-300 light:text-blue-800 text-xs sm:text-sm font-medium">จำนวนหัวข้อทั้งหมด</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-white light:text-gray-900 mt-1 transition-all duration-300 truncate">
                       {animatedTopics}
                     </p>
                   </div>
-                  <div className="text-blue-400 light:text-blue-700 text-3xl animate-bounce">📂</div>
+                  <div className="text-blue-400 light:text-blue-700 text-2xl sm:text-3xl animate-bounce flex-shrink-0">📂</div>
                 </div>
               </div>
               
-              <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 light:from-green-50/80 light:to-green-100/60 backdrop-blur-md rounded-2xl p-6 border border-green-500/30 light:border-green-200/70 shadow-xl transform transition-all duration-700 hover:scale-105 hover:shadow-2xl animate-fade-in-up animation-delay-200">
+              <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 light:from-green-50/80 light:to-green-100/60 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-green-500/30 light:border-green-200/70 shadow-xl transform transition-all duration-700 hover:scale-105 hover:shadow-2xl animate-fade-in-up animation-delay-200">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-green-300 light:text-green-800 text-sm font-medium">รายการข้อมูลทั้งหมด</p>
-                    <p className="text-3xl font-bold text-white light:text-gray-900 mt-1 transition-all duration-300">
+                  <div className="min-w-0 flex-1 mr-3">
+                    <p className="text-green-300 light:text-green-800 text-xs sm:text-sm font-medium">รายการข้อมูลทั้งหมด</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-white light:text-gray-900 mt-1 transition-all duration-300 truncate">
                       {animatedItems}
                     </p>
                   </div>
-                  <div className="text-green-400 light:text-green-700 text-3xl animate-pulse">📈</div>
+                  <div className="text-green-400 light:text-green-700 text-2xl sm:text-3xl animate-pulse flex-shrink-0">📈</div>
                 </div>
               </div>
               
-              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 light:from-purple-50/80 light:to-purple-100/60 backdrop-blur-md rounded-2xl p-6 border border-purple-500/30 light:border-purple-200/70 shadow-xl transform transition-all duration-700 hover:scale-105 hover:shadow-2xl animate-fade-in-up animation-delay-400">
+              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 light:from-purple-50/80 light:to-purple-100/60 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-purple-500/30 light:border-purple-200/70 shadow-xl transform transition-all duration-700 hover:scale-105 hover:shadow-2xl animate-fade-in-up animation-delay-400">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-300 light:text-purple-800 text-sm font-medium">หัวข้อยอดนิยม</p>
-                    <p className="text-xl font-bold text-white light:text-gray-900 mt-1 truncate">
+                  <div className="min-w-0 flex-1 mr-3">
+                    <p className="text-purple-300 light:text-purple-800 text-xs sm:text-sm font-medium">หัวข้อยอดนิยม</p>
+                    <p className="text-sm sm:text-xl font-bold text-white light:text-gray-900 mt-1 truncate" title={originalData.length > 0 && originalData[0]?.name ? originalData[0].name : 'ไม่มีข้อมูล'}>
                       {originalData.length > 0 && originalData[0]?.name ? originalData[0].name : 'ไม่มีข้อมูล'}
                     </p>
                   </div>
-                  <div className="text-purple-400 light:text-purple-700 text-3xl animate-bounce animation-delay-100">🏆</div>
+                  <div className="text-purple-400 light:text-purple-700 text-2xl sm:text-3xl animate-bounce animation-delay-100 flex-shrink-0">🏆</div>
                 </div>
               </div>
 
               {/* Search Results Card */}
-              <div className="bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 light:from-cyan-50/80 light:to-cyan-100/60 backdrop-blur-md rounded-2xl p-6 border border-cyan-500/30 light:border-cyan-200/70 shadow-xl transform transition-all duration-700 hover:scale-105 hover:shadow-2xl animate-fade-in-up animation-delay-600">
+              <div className="bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 light:from-cyan-50/80 light:to-cyan-100/60 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-cyan-500/30 light:border-cyan-200/70 shadow-xl transform transition-all duration-700 hover:scale-105 hover:shadow-2xl animate-fade-in-up animation-delay-600">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-cyan-300 light:text-cyan-800 text-sm font-medium">
+                  <div className="min-w-0 flex-1 mr-3">
+                    <p className="text-cyan-300 light:text-cyan-800 text-xs sm:text-sm font-medium">
                       {displayedData.mode === 'search' ? 'ผลการค้นหา' : 'กำลังแสดง'}
                     </p>
-                    <p className="text-3xl font-bold text-white light:text-gray-900 mt-1 transition-all duration-300">
+                    <p className="text-2xl sm:text-3xl font-bold text-white light:text-gray-900 mt-1 transition-all duration-300 truncate">
                       {animatedDisplayedTopics}
                     </p>
                   </div>
-                  <div className="text-cyan-400 light:text-cyan-700 text-3xl animate-pulse animation-delay-200">
+                  <div className="text-cyan-400 light:text-cyan-700 text-2xl sm:text-3xl animate-pulse animation-delay-200 flex-shrink-0">
                     {displayedData.mode === 'search' ? '🔍' : '👁️'}
                   </div>
                 </div>
@@ -465,18 +472,18 @@ export default function GraphDashboard() {
             </div>
 
             {/* Search Bar */}
-            <div className="mb-8 animate-fade-in-up animation-delay-800">
-              <div className="max-w-md mx-auto">
+            <div className="mb-6 sm:mb-8 animate-fade-in-up animation-delay-800">
+              <div className="max-w-md mx-auto px-4 sm:px-0">
                 <div className="relative">
                   <input
                     type="text"
                     placeholder="ค้นหาหัวข้อ..."
                     value={searchTerm}
                     onChange={(e) => handleSearch(e.target.value)}
-                    className="w-full bg-slate-800/50 light:bg-gray-50/90 backdrop-blur-md border border-slate-600 light:border-gray-300 rounded-xl px-4 py-3 pl-12 pr-12 text-white light:text-gray-800 placeholder-slate-400 light:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                    className="w-full bg-slate-800/50 light:bg-gray-50/90 backdrop-blur-md border border-slate-600 light:border-gray-300 rounded-xl px-4 py-3 pl-12 pr-12 text-white light:text-gray-800 placeholder-slate-400 light:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-sm sm:text-base"
                   />
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center">
-                    <svg className="w-5 h-5 text-slate-400 light:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 light:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                   </div>
@@ -485,7 +492,7 @@ export default function GraphDashboard() {
                       onClick={clearSearch}
                       className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 light:text-gray-500 hover:text-white light:hover:text-gray-800 transition-colors duration-200"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
@@ -512,20 +519,21 @@ export default function GraphDashboard() {
             </div>
 
             {/* Main Chart */}
-            <div className="bg-slate-800/50 light:bg-white/90 backdrop-blur-md rounded-2xl p-8 shadow-2xl border border-slate-700 light:border-gray-200 animate-fade-in-up animation-delay-600 transition-all duration-300">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white light:text-gray-900 flex items-center gap-3 transition-colors duration-300">
-                  <span className="text-3xl animate-pulse">📊</span>
-                  กราฟแสดงผลข้อมูล
+            <div className="bg-slate-800/50 light:bg-white/90 backdrop-blur-md rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-2xl border border-slate-700 light:border-gray-200 animate-fade-in-up animation-delay-600 transition-all duration-300">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-4 sm:mb-6 gap-4">
+                <h2 className="text-xl sm:text-2xl font-bold text-white light:text-gray-900 flex items-center gap-2 sm:gap-3 transition-colors duration-300">
+                  <span className="text-2xl sm:text-3xl animate-pulse">📊</span>
+                  <span className="hidden sm:inline">กราฟแสดงผลข้อมูล</span>
+                  <span className="sm:hidden">กราฟข้อมูล</span>
                 </h2>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                   {/* Chart Type Selector */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-400 light:text-gray-600">ประเภท:</span>
-                    <div className="flex bg-slate-700/50 light:bg-gray-100/80 rounded-lg p-1 border border-slate-600 light:border-gray-300">
+                  <div className="flex items-center gap-2 order-2 sm:order-1">
+                    <span className="text-xs sm:text-sm text-slate-400 light:text-gray-600 hidden sm:inline">ประเภท:</span>
+                    <div className="flex bg-slate-700/50 light:bg-gray-100/80 rounded-lg p-1 border border-slate-600 light:border-gray-300 w-full sm:w-auto justify-center">
                       <button
                         onClick={() => setChartType('bar')}
-                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 transform hover:scale-110 ${
+                        className={`px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-300 transform hover:scale-110 flex-1 sm:flex-none ${
                           chartType === 'bar'
                             ? 'bg-blue-600 text-white shadow-lg scale-105'
                             : 'text-slate-300 light:text-gray-700 hover:text-white light:hover:text-gray-900 hover:bg-slate-600 light:hover:bg-gray-200'
@@ -535,7 +543,7 @@ export default function GraphDashboard() {
                       </button>
                       <button
                         onClick={() => setChartType('line')}
-                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 transform hover:scale-110 ${
+                        className={`px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-300 transform hover:scale-110 flex-1 sm:flex-none ${
                           chartType === 'line'
                             ? 'bg-green-600 text-white shadow-lg scale-105'
                             : 'text-slate-300 light:text-gray-700 hover:text-white light:hover:text-gray-900 hover:bg-slate-600 light:hover:bg-gray-200'
@@ -545,7 +553,7 @@ export default function GraphDashboard() {
                       </button>
                       <button
                         onClick={() => setChartType('pie')}
-                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 transform hover:scale-110 ${
+                        className={`px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-300 transform hover:scale-110 flex-1 sm:flex-none ${
                           chartType === 'pie'
                             ? 'bg-orange-600 text-white shadow-lg scale-105'
                             : 'text-slate-300 light:text-gray-700 hover:text-white light:hover:text-gray-900 hover:bg-slate-600 light:hover:bg-gray-200'
@@ -555,7 +563,7 @@ export default function GraphDashboard() {
                       </button>
                       <button
                         onClick={() => setChartType('doughnut')}
-                        className={`px-3 py-2 rounded-md text-sm font-medium transition-all duration-300 transform hover:scale-110 ${
+                        className={`px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-300 transform hover:scale-110 flex-1 sm:flex-none ${
                           chartType === 'doughnut'
                             ? 'bg-purple-600 text-white shadow-lg scale-105'
                             : 'text-slate-300 light:text-gray-700 hover:text-white light:hover:text-gray-900 hover:bg-slate-600 light:hover:bg-gray-200'
@@ -568,8 +576,8 @@ export default function GraphDashboard() {
 
                   {/* Top N Selector */}
                   {searchTerm.trim() === '' && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-slate-400 light:text-gray-600">แสดง:</span>
+                    <div className="flex items-center gap-2 order-3 sm:order-2">
+                      <span className="text-xs sm:text-sm text-slate-400 light:text-gray-600 hidden sm:inline">แสดง:</span>
                       <select
                         value={topN}
                         onChange={(e) => {
@@ -577,7 +585,7 @@ export default function GraphDashboard() {
                           setTopN(newTopN);
                           updateChartWithTopN(newTopN);
                         }}
-                        className="bg-slate-700/50 light:bg-gray-100/80 border border-slate-600 light:border-gray-300 rounded-lg px-3 py-2 text-sm text-white light:text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="bg-slate-700/50 light:bg-gray-100/80 border border-slate-600 light:border-gray-300 rounded-lg px-2 sm:px-3 py-2 text-xs sm:text-sm text-white light:text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-auto"
                       >
                         <option value={5}>Top 5</option>
                         <option value={10}>Top 10</option>
@@ -589,44 +597,49 @@ export default function GraphDashboard() {
 
                   {/* Search Mode Indicator */}
                   {searchTerm.trim() !== '' && (
-                    <div className="flex items-center gap-2 bg-cyan-600/20 light:bg-cyan-50/80 border border-cyan-500/30 light:border-cyan-200/70 rounded-lg px-3 py-2">
-                      <span className="text-cyan-300 light:text-cyan-800 text-sm">🔍 โหมดค้นหา</span>
+                    <div className="flex items-center gap-2 bg-cyan-600/20 light:bg-cyan-50/80 border border-cyan-500/30 light:border-cyan-200/70 rounded-lg px-2 sm:px-3 py-2 order-3 sm:order-2">
+                      <span className="text-cyan-300 light:text-cyan-800 text-xs sm:text-sm">🔍 โหมดค้นหา</span>
                       <button
                         onClick={clearSearch}
-                        className="text-cyan-300 light:text-cyan-800 hover:text-white light:hover:text-cyan-900 transition-colors duration-200 text-sm"
+                        className="text-cyan-300 light:text-cyan-800 hover:text-white light:hover:text-cyan-900 transition-colors duration-200 text-xs sm:text-sm"
                       >
                         ✕ ล้าง
                       </button>
                     </div>
                   )}
                   
-                  <div className="flex items-center gap-2 text-sm text-slate-400 light:text-gray-600">
-                    <span className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full animate-pulse"></span>
-                    อัปเดตล่าสุด: {new Date().toLocaleString('th-TH')}
+                  <div className="hidden lg:flex items-center gap-2 text-xs sm:text-sm text-slate-400 light:text-gray-600 order-1 sm:order-3">
+                    <span className="w-2 h-2 sm:w-3 sm:h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full animate-pulse"></span>
+                    <span className="hidden xl:inline">อัปเดตล่าสุด: {new Date().toLocaleString('th-TH')}</span>
+                    <span className="xl:hidden">อัปเดต: {new Date().toLocaleDateString('th-TH')}</span>
                   </div>
                 </div>
               </div>
               
               <div className="relative">
-                <div className={`transition-all duration-300 ${isAnimating ? 'opacity-90' : 'opacity-100'}`}>
-                  {getChartComponent()}
+                <div className={`transition-all duration-300 ${isAnimating ? 'opacity-90' : 'opacity-100'}`} style={{ height: '300px', minHeight: '250px' }}>
+                  <div className="h-full w-full">
+                    {getChartComponent()}
+                  </div>
                 </div>
                 
                 {/* Info Card */}
                 {searchTerm.trim() === '' && originalData.length > topN && (
-                  <div className="mt-6 bg-slate-700/30 light:bg-gray-100/80 backdrop-blur-sm rounded-xl p-4 border border-slate-600/50 light:border-gray-200/70">
-                    <div className="flex items-center justify-between text-sm">
+                  <div className="mt-4 sm:mt-6 bg-slate-700/30 light:bg-gray-100/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-slate-600/50 light:border-gray-200/70">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs sm:text-sm gap-2 sm:gap-0">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-gray-500 light:bg-gray-600 rounded-full"></div>
+                        <div className="w-2 h-2 sm:w-3 sm:h-3 bg-gray-500 light:bg-gray-600 rounded-full flex-shrink-0"></div>
                         <span className="text-slate-300 light:text-gray-800">
                           กำลังแสดง {Math.min(topN, originalData.length)} หัวข้อ จากทั้งหมด {originalData.length} หัวข้อ
                         </span>
                       </div>
-                      <div className="text-slate-400 light:text-gray-700">
+                      <div className="text-slate-400 light:text-gray-700 text-right">
                         {originalData.length > topN && (
                           <span>
                             หัวข้อที่ไม่แสดง: {originalData.length - topN} หัวข้อ 
-                            ({originalData.slice(topN).reduce((sum, item) => sum + item.count, 0)} รายการ)
+                            <span className="hidden sm:inline">
+                              ({originalData.slice(topN).reduce((sum, item) => sum + item.count, 0)} รายการ)
+                            </span>
                           </span>
                         )}
                       </div>
@@ -636,15 +649,15 @@ export default function GraphDashboard() {
 
                 {/* Search Results Info */}
                 {searchTerm.trim() !== '' && (
-                  <div className="mt-6 bg-cyan-700/20 light:bg-cyan-50/80 backdrop-blur-sm rounded-xl p-4 border border-cyan-600/50 light:border-cyan-200/70">
-                    <div className="flex items-center justify-between text-sm">
+                  <div className="mt-4 sm:mt-6 bg-cyan-700/20 light:bg-cyan-50/80 backdrop-blur-sm rounded-xl p-3 sm:p-4 border border-cyan-600/50 light:border-cyan-200/70">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs sm:text-sm gap-2 sm:gap-0">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 bg-cyan-500 light:bg-cyan-700 rounded-full animate-pulse"></div>
+                        <div className="w-2 h-2 sm:w-3 sm:h-3 bg-cyan-500 light:bg-cyan-700 rounded-full animate-pulse flex-shrink-0"></div>
                         <span className="text-cyan-300 light:text-cyan-800">
                           ผลการค้นหา "{searchTerm}" {filteredData.length} หัวข้อ
                         </span>
                       </div>
-                      <div className="text-cyan-400 light:text-cyan-700">
+                      <div className="text-cyan-400 light:text-cyan-700 text-right">
                         {filteredData.length > 0 && (
                           <span>
                             รายการทั้งหมด: {filteredData.reduce((sum, item) => sum + item.count, 0)} รายการ

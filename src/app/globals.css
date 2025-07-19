@@ -799,6 +799,44 @@ html.light {
   color: #6b7280;
 }
 
+/* Navbar Light Mode Styles */
+html.light .lightmode-text {
+  color: #374151 !important; /* gray-700 */
+}
+
+html.light .lightmode-hover:hover {
+  color: #1f2937 !important; /* gray-800 */
+}
+
+html.light .lightmode-bg-hover:hover {
+  background-color: #f3f4f6 !important; /* gray-100 */
+}
+
+html.light .lightmode-border {
+  border-color: #e5e7eb !important; /* gray-200 */
+}
+
+html.light .lightmode-mobile-menu {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+html.light .lightmode-button {
+  background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
+}
+
+html.light .lightmode-button:hover {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+}
+
+html.light .lightmode-button-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+}
+
+html.light .lightmode-button-danger:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+}
+
 .light .hover\:text-gray-800:hover {
   color: #1f2937;
 }

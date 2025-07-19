@@ -125,10 +125,11 @@ export default function Navbar() {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center gap-2">
+            <ThemeToggle />
             <button
               onClick={toggleMenu}
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white hover:bg-blue-100/40 dark:hover:bg-blue-900/40 p-2 rounded-lg shadow-md border border-blue-300/50 dark:border-blue-500/30 transition-colors duration-200"
+              className="text-gray-600 dark:text-gray-400 lightmode-text hover:text-gray-800 dark:hover:text-white hover:bg-blue-100/40 dark:hover:bg-blue-900/40 lightmode-hover p-2 rounded-lg shadow-md border border-blue-300/50 dark:border-blue-500/30 lightmode-border transition-colors duration-200"
               aria-label="Toggle menu"
             >
               <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,14 +146,14 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white dark:bg-gray-900/80 backdrop-blur-xl border-t border-gray-200 dark:border-gray-800 shadow-xl animate-fade-in transition-all duration-300">
+        <div className="md:hidden bg-white/95 dark:bg-gray-900/95 lightmode-mobile-menu backdrop-blur-xl border-t border-gray-200 dark:border-gray-800 lightmode-border shadow-xl animate-fade-in transition-all duration-300">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             <button
               onClick={() => {
                 router.push("/");
                 setIsMenuOpen(false);
               }}
-              className="text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 block px-3 py-2 rounded-md text-base font-semibold w-full text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="text-gray-600 dark:text-gray-300 lightmode-text hover:text-blue-600 dark:hover:text-blue-400 lightmode-hover block px-3 py-2 rounded-md text-base font-semibold w-full text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 lightmode-bg-hover"
             >
               Home
             </button>
@@ -161,7 +162,7 @@ export default function Navbar() {
                 router.push("/dashboard");
                 setIsMenuOpen(false);
               }}
-              className="text-gray-800 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 block px-3 py-2 rounded-md text-base font-semibold w-full text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="text-gray-800 dark:text-gray-300 lightmode-text hover:text-blue-600 dark:hover:text-blue-400 lightmode-hover block px-3 py-2 rounded-md text-base font-semibold w-full text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 lightmode-bg-hover"
             >
               Dashboard
             </button>
@@ -170,7 +171,7 @@ export default function Navbar() {
                 router.push("/dashboard/graph");
                 setIsMenuOpen(false);
               }}
-              className="text-gray-800 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 block px-3 py-2 rounded-md text-base font-semibold w-full text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="text-gray-800 dark:text-gray-300 lightmode-text hover:text-purple-600 dark:hover:text-purple-400 lightmode-hover block px-3 py-2 rounded-md text-base font-semibold w-full text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 lightmode-bg-hover"
             >
               Graph
             </button>
@@ -181,7 +182,7 @@ export default function Navbar() {
                     router.push("/pages/register");
                     setIsMenuOpen(false);
                   }}
-                  className="text-gray-800 dark:text-gray-300 hover:text-emerald-600 dark:hover:text-emerald-400 block px-3 py-2 rounded-md text-base font-semibold w-full text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="text-gray-800 dark:text-gray-300 lightmode-text hover:text-emerald-600 dark:hover:text-emerald-400 lightmode-hover block px-3 py-2 rounded-md text-base font-semibold w-full text-left transition-colors hover:bg-gray-100 dark:hover:bg-gray-800 lightmode-bg-hover"
                 >
                   Register
                 </button>
@@ -190,7 +191,7 @@ export default function Navbar() {
                     router.push("/pages/login");
                     setIsMenuOpen(false);
                   }}
-                  className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white block px-3 py-2 rounded-md text-base font-semibold w-full text-left shadow-md transition-colors"
+                  className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 lightmode-button text-white block px-3 py-2 rounded-md text-base font-semibold w-full text-left shadow-md transition-colors"
                 >
                   Login
                 </button>
@@ -203,7 +204,7 @@ export default function Navbar() {
                       {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <span className="text-gray-800 dark:text-white font-semibold text-base truncate max-w-[120px] transition-colors duration-300" title={user.name || user.email}>
+                  <span className="text-gray-800 dark:text-white lightmode-text font-semibold text-base truncate max-w-[120px] transition-colors duration-300" title={user.name || user.email}>
                     {user.name || user.email}
                   </span>
                 </div>
@@ -212,7 +213,7 @@ export default function Navbar() {
                     handleLogout();
                     setIsMenuOpen(false);
                   }}
-                  className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white block px-3 py-2 rounded-md text-base font-semibold w-full text-left shadow-md transition-colors"
+                  className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 lightmode-button-danger text-white block px-3 py-2 rounded-md text-base font-semibold w-full text-left shadow-md transition-colors"
                 >
                   Logout
                 </button>
