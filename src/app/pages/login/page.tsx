@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/useAuth";
+import Navbar from "@/app/component/Navbar/Navbar";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -67,40 +68,41 @@ export default function LoginPage() {
 
   return (
     <>
+      <Navbar />
       {/* Show loading screen while checking auth */}
       {loading && (
-        <div className="min-h-screen flex items-center justify-center bg-gray-900">
-          <div className="text-white text-lg">กำลังโหลด...</div>
+        <div className="min-h-screen flex items-center justify-center bg-gray-900 lightmode-auth-loading">
+          <div className="text-white text-lg lightmode-auth-loading-text">กำลังโหลด...</div>
         </div>
       )}
 
       {/* Show login form only if not loading and not authenticated */}
       {!loading && !user && (
-        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-black lightmode-auth-bg">
       {/* Animated background elements */}
       <div className="absolute inset-0 w-full h-full overflow-hidden">
         {/* Floating geometric shapes */}
-        <div className="absolute top-20 left-10 w-4 h-4 bg-blue-500 rounded-full opacity-30 animate-bounce"></div>
-        <div className="absolute top-40 right-20 w-6 h-6 bg-emerald-500 rounded-full opacity-40 animate-pulse"></div>
-        <div className="absolute bottom-32 left-16 w-3 h-3 bg-indigo-500 rounded-full opacity-35 animate-ping"></div>
+        <div className="absolute top-20 left-10 w-4 h-4 bg-blue-500 rounded-full opacity-30 animate-bounce lightmode-shape-blue"></div>
+        <div className="absolute top-40 right-20 w-6 h-6 bg-emerald-500 rounded-full opacity-40 animate-pulse lightmode-shape-emerald"></div>
+        <div className="absolute bottom-32 left-16 w-3 h-3 bg-indigo-500 rounded-full opacity-35 animate-ping lightmode-shape-indigo"></div>
         <div
-          className="absolute bottom-48 right-12 w-5 h-5 bg-cyan-500 rounded-full opacity-30 animate-bounce"
+          className="absolute bottom-48 right-12 w-5 h-5 bg-cyan-500 rounded-full opacity-30 animate-bounce lightmode-shape-cyan"
           style={{ animationDelay: "0.5s" }}
         ></div>
 
         {/* Gradient orbs with better visibility */}
-        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full filter blur-3xl animate-pulse"></div>
+        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-gradient-to-r from-blue-500/20 to-cyan-500/20 rounded-full filter blur-3xl animate-pulse lightmode-orb-blue"></div>
         <div
-          className="absolute top-1/3 -right-20 w-96 h-96 bg-gradient-to-r from-emerald-500/15 to-blue-500/15 rounded-full filter blur-3xl animate-pulse"
+          className="absolute top-1/3 -right-20 w-96 h-96 bg-gradient-to-r from-emerald-500/15 to-blue-500/15 rounded-full filter blur-3xl animate-pulse lightmode-orb-emerald"
           style={{ animationDelay: "2s" }}
         ></div>
         <div
-          className="absolute bottom-1/4 left-1/4 w-72 h-72 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-full filter blur-3xl animate-pulse"
+          className="absolute bottom-1/4 left-1/4 w-72 h-72 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-full filter blur-3xl animate-pulse lightmode-orb-indigo"
           style={{ animationDelay: "4s" }}
         ></div>
 
         {/* Grid pattern */}
-        <div className="absolute inset-0 opacity-10">
+        <div className="absolute inset-0 opacity-10 lightmode-grid-pattern">
           <div
             className="absolute inset-0"
             style={{
@@ -113,19 +115,19 @@ export default function LoginPage() {
 
         {/* Floating particles */}
         <div
-          className="absolute top-1/4 left-1/4 w-1 h-1 bg-white/30 rounded-full animate-ping"
+          className="absolute top-1/4 left-1/4 w-1 h-1 bg-white/30 rounded-full animate-ping lightmode-particle"
           style={{ animationDelay: "0.5s" }}
         ></div>
         <div
-          className="absolute top-1/2 right-1/4 w-1 h-1 bg-white/30 rounded-full animate-ping"
+          className="absolute top-1/2 right-1/4 w-1 h-1 bg-white/30 rounded-full animate-ping lightmode-particle"
           style={{ animationDelay: "1.5s" }}
         ></div>
         <div
-          className="absolute bottom-1/3 left-1/3 w-1 h-1 bg-white/30 rounded-full animate-ping"
+          className="absolute bottom-1/3 left-1/3 w-1 h-1 bg-white/30 rounded-full animate-ping lightmode-particle"
           style={{ animationDelay: "2.5s" }}
         ></div>
         <div
-          className="absolute bottom-1/4 right-1/3 w-1 h-1 bg-white/30 rounded-full animate-ping"
+          className="absolute bottom-1/4 right-1/3 w-1 h-1 bg-white/30 rounded-full animate-ping lightmode-particle"
           style={{ animationDelay: "3.5s" }}
         ></div>
       </div>
@@ -134,7 +136,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Logo/Brand area */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-tr from-blue-500 to-emerald-500 rounded-full mb-4 shadow-lg">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-tr from-blue-500 to-emerald-500 rounded-full mb-4 shadow-lg lightmode-brand-icon">
               <svg
                 className="w-8 h-8 text-white"
                 fill="none"
@@ -149,24 +151,24 @@ export default function LoginPage() {
                 />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">เข้าสู่ระบบ</h1>
-            <p className="text-gray-400 text-sm">
+            <h1 className="text-3xl font-bold text-white mb-2 lightmode-auth-title">เข้าสู่ระบบ</h1>
+            <p className="text-gray-400 text-sm lightmode-auth-subtitle">
               ยินดีต้อนรับกลับ กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ
             </p>
           </div>
 
           {/* Main form card */}
-          <div className="bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-700/50 p-8 transition-all duration-300 hover:shadow-blue-500/20">
+          <div className="bg-gray-800/80 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-700/50 p-8 transition-all duration-300 hover:shadow-blue-500/20 lightmode-auth-card">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Email field */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-200">
+                <label className="block text-sm font-medium text-gray-200 lightmode-auth-label">
                   อีเมล
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg
-                      className="h-5 w-5 text-gray-500"
+                      className="h-5 w-5 text-gray-500 lightmode-auth-icon"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -184,7 +186,7 @@ export default function LoginPage() {
                     name="email"
                     value={form.email}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 lightmode-auth-input"
                     placeholder="กรอกอีเมลของคุณ"
                     autoComplete="email"
                   />
@@ -193,13 +195,13 @@ export default function LoginPage() {
 
               {/* Password field */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-200">
+                <label className="block text-sm font-medium text-gray-200 lightmode-auth-label">
                   รหัสผ่าน
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg
-                      className="h-5 w-5 text-gray-500"
+                      className="h-5 w-5 text-gray-500 lightmode-auth-icon"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -217,7 +219,7 @@ export default function LoginPage() {
                     name="password"
                     value={form.password}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                    className="w-full pl-10 pr-4 py-3 bg-gray-900/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 lightmode-auth-input"
                     placeholder="กรอกรหัสผ่านของคุณ"
                     autoComplete="current-password"
                   />
@@ -231,13 +233,13 @@ export default function LoginPage() {
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="rounded border-gray-600/50 text-blue-500 focus:ring-blue-500 focus:ring-offset-0 bg-gray-900/50"
+                    className="rounded border-gray-600/50 text-blue-500 focus:ring-blue-500 focus:ring-offset-0 bg-gray-900/50 lightmode-auth-checkbox"
                   />
-                  <span className="ml-2 text-sm text-gray-400">จดจำฉัน</span>
+                  <span className="ml-2 text-sm text-gray-400 lightmode-auth-small-text">จดจำฉัน</span>
                 </label>
                 <a
-                  href="#"
-                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                  href="/pages/forgot_password"
+                  className="text-sm text-blue-400 hover:text-blue-300 transition-colors lightmode-auth-link"
                 >
                   ลืมรหัสผ่าน?
                 </a>
@@ -245,7 +247,7 @@ export default function LoginPage() {
 
               {/* Error and Success messages */}
               {error && (
-                <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded-lg p-3 lightmode-auth-error">
                   <svg
                     className="h-5 w-5 flex-shrink-0"
                     fill="none"
@@ -264,7 +266,7 @@ export default function LoginPage() {
               )}
 
               {success && (
-                <div className="flex items-center gap-2 text-green-400 text-sm bg-green-500/10 border border-green-500/20 rounded-lg p-3">
+                <div className="flex items-center gap-2 text-green-400 text-sm bg-green-500/10 border border-green-500/20 rounded-lg p-3 lightmode-auth-success">
                   <svg
                     className="h-5 w-5 flex-shrink-0"
                     fill="none"
@@ -285,7 +287,7 @@ export default function LoginPage() {
               {/* Submit button */}
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-blue-600 to-emerald-600 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-700 transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-blue-500/25"
+                className="w-full bg-gradient-to-r from-blue-600 to-emerald-600 text-white py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-emerald-700 disabled:from-gray-600 disabled:to-gray-700 transition-all duration-300 transform hover:scale-105 disabled:scale-100 shadow-lg hover:shadow-blue-500/25 lightmode-auth-button"
                 disabled={loginLoading}
               >
                 {loginLoading ? (
@@ -334,11 +336,11 @@ export default function LoginPage() {
 
             {/* Footer */}
             <div className="mt-6 text-center">
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-400 text-sm lightmode-auth-small-text">
                 ยังไม่มีบัญชี?
                 <a
                   href="/pages/register"
-                  className="text-blue-400 hover:text-blue-300 font-medium ml-1 transition-colors"
+                  className="text-blue-400 hover:text-blue-300 font-medium ml-1 transition-colors lightmode-auth-link"
                 >
                   สมัครสมาชิก
                 </a>

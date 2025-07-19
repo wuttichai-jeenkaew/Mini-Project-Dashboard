@@ -96,7 +96,7 @@ const TopicManager: React.FC<TopicManagerProps> = ({
                   <select
                     value={selectedTopic}
                     onChange={(e) => onTopicChange(e.target.value)}
-                    className="w-full bg-gray-800/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full bg-gray-800/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent lightmode-select"
                   >
                     <option value="">เลือกหัวข้อ...</option>
                     {topics.map((topic) => (
@@ -111,7 +111,7 @@ const TopicManager: React.FC<TopicManagerProps> = ({
               {user && (
                 <div className="flex gap-2">
                   <button
-                    className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600/80 to-blue-700/80 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-blue-700/90 hover:to-blue-800/90 transition-all duration-200 shadow-lg hover:shadow-xl border border-blue-500/30"
+                    className="flex-1 px-4 py-2 bg-blue-500/30 hover:bg-blue-500/60 backdrop-blur-md text-white rounded-xl font-semibold transition-all duration-200 shadow-md hover:shadow-lg border border-blue-400/30 focus:outline-none focus:ring-2 focus:ring-blue-400/40"
                     onClick={() => setShowAddTopic(true)}
                     type="button"
                   >
@@ -120,7 +120,7 @@ const TopicManager: React.FC<TopicManagerProps> = ({
                   {selectedTopic && (
                     <>
                       <button
-                        className="flex-1 px-4 py-2 bg-gradient-to-r from-emerald-600/80 to-emerald-700/80 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-emerald-700/90 hover:to-emerald-800/90 transition-all duration-200 shadow-lg hover:shadow-xl border border-emerald-500/30"
+                        className="flex-1 px-4 py-2 bg-emerald-500/30 hover:bg-emerald-500/60 backdrop-blur-md text-white rounded-xl font-semibold transition-all duration-200 shadow-md hover:shadow-lg border border-emerald-400/30 focus:outline-none focus:ring-2 focus:ring-emerald-400/40"
                         onClick={() => {
                           const topic = topics.find(t => t.id === selectedTopic);
                           if (topic) openEditTopic(topic);
@@ -130,7 +130,7 @@ const TopicManager: React.FC<TopicManagerProps> = ({
                         แก้ไขหัวข้อ
                       </button>
                       <button
-                        className="flex-1 px-4 py-2 bg-gradient-to-r from-red-600/80 to-red-700/80 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-red-700/90 hover:to-red-800/90 transition-all duration-200 shadow-lg hover:shadow-xl border border-red-500/30"
+                        className="flex-1 px-4 py-2 bg-red-500/30 hover:bg-red-500/60 backdrop-blur-md text-white rounded-xl font-semibold transition-all duration-200 shadow-md hover:shadow-lg border border-red-400/30 focus:outline-none focus:ring-2 focus:ring-red-400/40"
                         onClick={() => {
                           const topic = topics.find(t => t.id === selectedTopic);
                           if (topic) openDeleteTopic(topic);

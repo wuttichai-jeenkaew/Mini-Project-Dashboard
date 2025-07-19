@@ -34,7 +34,7 @@ export default function Popup({
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-lg bg-black/40">
       <div
-        className={`bg-gray-900/90 border border-gray-600/50 rounded-2xl shadow-2xl p-6 w-full ${sizeClasses[size]} mx-4 backdrop-blur-xl`}
+        className={`bg-gray-900/90 border border-gray-600/50 rounded-2xl shadow-2xl p-6 w-full ${sizeClasses[size]} mx-4 backdrop-blur-xl lightmode-popup-bg`}
       >
         {/* Header */}
         {(title || showCloseButton) && (
@@ -46,13 +46,13 @@ export default function Popup({
                 </div>
               )}
               {title && (
-                <h2 className="text-xl font-bold text-white">{title}</h2>
+                <h2 className="text-xl font-bold text-white light:text-gray-900">{title}</h2>
               )}
             </div>
             {showCloseButton && (
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-400 hover:text-white light:text-gray-600 light:hover:text-gray-800 transition-colors hover:scale-110 active:scale-95 transform duration-200"
               >
                 <svg
                   className="w-6 h-6"

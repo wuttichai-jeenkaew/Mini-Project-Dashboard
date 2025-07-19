@@ -36,7 +36,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
             type="text"
             value={searchQuery}
             onChange={onSearchChange}
-            className="w-full bg-gray-800/50 border border-gray-600 rounded-lg pl-10 pr-20 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full bg-gray-800/50 border border-gray-600 rounded-lg pl-10 pr-20 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent lightmode-search-input"
             placeholder="ค้นหาสินค้าจากชื่อสินค้า..."
           />
           <div className="absolute inset-y-0 right-0 flex items-center">

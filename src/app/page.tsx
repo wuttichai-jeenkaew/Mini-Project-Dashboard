@@ -115,7 +115,7 @@ export default function Home() {
       window.location.href = '/pages/dashboard';
     } else {
       // If not logged in, redirect to register
-      router.push('/pages/register'); // Changed to register page
+      router.push('/pages/dashboard'); // Changed to register page
     }
   };
 
@@ -324,3 +324,4 @@ export default function Home() {
     </div>
   );
 }
+

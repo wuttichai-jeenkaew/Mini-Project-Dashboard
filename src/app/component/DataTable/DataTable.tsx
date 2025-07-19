@@ -9,6 +9,7 @@ interface FormData {
   amount: number;
   unit: number;
   product_name: string;
+  _deleted?: boolean;
 }
 
 interface SortConfig {
@@ -24,6 +25,8 @@ interface DataTableProps {
   sortConfig: SortConfig[];
   startDate: string;
   endDate: string;
+  page: number;
+  pageSize: number;
   onSort: (key: keyof FormData | "total") => void;
   onEditAll: () => void;
   onSaveAll: () => void;
@@ -31,12 +34,14 @@ interface DataTableProps {
   onAddRow: () => void;
   onEditCell: (rowIdx: number, key: keyof FormData, value: any) => void;
   onDeleteRow: (id: string) => void;
+  onDeleteRowInEditMode: (id: string) => void;
   onStartDateChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onEndDateChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onApplyDateFilter: () => void;
   onClearDateFilter: () => void;
   getSortIcon: (columnKey: keyof FormData | "total") => React.ReactNode;
   setSortConfig: (config: SortConfig[]) => void;
+  onAddToEditTable: (item: FormData) => void;
 }
 
 const DataTable: React.FC<DataTableProps> = ({
@@ -47,6 +52,8 @@ const DataTable: React.FC<DataTableProps> = ({
   sortConfig,
   startDate,
   endDate,
+  page,
+  pageSize,
   onSort,
   onEditAll,
   onSaveAll,
@@ -54,12 +61,14 @@ const DataTable: React.FC<DataTableProps> = ({
   onAddRow,
   onEditCell,
   onDeleteRow,
+  onDeleteRowInEditMode,
   onStartDateChange,
   onEndDateChange,
   onApplyDateFilter,
   onClearDateFilter,
   getSortIcon,
   setSortConfig,
+  onAddToEditTable,
 }) => {
   const getSortedData = () => {
     let sortableData = [...data];
@@ -99,10 +108,36 @@ const DataTable: React.FC<DataTableProps> = ({
     return sortableData;
   };
 
+  const getPaginatedEditTable = () => {
+    // กรองเฉพาะข้อมูลที่ไม่ถูกลบออก
+    const filteredData = data.filter(item => 
+      !editTable.some(editItem => editItem.id === item.id && editItem._deleted)
+    );
+    
+    // ใช้ข้อมูลที่แก้ไขแล้วจาก editTable ถ้ามี
+    return filteredData.map(item => {
+      const editedItem = editTable.find(editItem => editItem.id === item.id);
+      return editedItem || item;
+    });
+  };
+
+  const getEditIndex = (itemId: string) => {
+    let editIndex = editTable.findIndex(row => row.id === itemId);
+    if (editIndex === -1) {
+      // ถ้าไม่มีใน editTable ให้เพิ่มเข้าไปผ่าน callback
+      const item = data.find(d => d.id === itemId);
+      if (item) {
+        onAddToEditTable(item);
+        editIndex = editTable.length; // index ใหม่
+      }
+    }
+    return editIndex;
+  };
+
   return (
-    <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700 p-4">
+    <div className="bg-gray-800/50 light:bg-white/90 backdrop-blur-sm rounded-lg shadow-xl border border-gray-700 light:border-gray-200 p-4 transition-colors duration-300">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+        <h2 className="text-xl font-bold text-white flex items-center gap-2 transition-colors duration-300">
           <svg
             className="w-5 h-5"
             fill="none"
@@ -127,14 +162,14 @@ const DataTable: React.FC<DataTableProps> = ({
         <div className="flex items-center gap-2">
           {sortConfig.length > 0 && (
             <button
-              className="px-2 py-1 bg-red-600 text-white rounded text-xs font-medium hover:bg-red-700 transition-colors"
+              className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors"
               onClick={() => setSortConfig([])}
             >
               ล้างการเรียง
             </button>
           )}
           <button
-            className="px-3 py-1.5 bg-gradient-to-r from-blue-600/80 to-blue-700/80 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-blue-700/90 hover:to-blue-800/90 transition-all duration-200 shadow-lg hover:shadow-xl border border-blue-500/30 flex items-center gap-1 text-sm"
+            className="px-3 py-1.5 bg-gradient-to-r from-blue-600/80 to-blue-700/80 light:from-blue-500 light:to-blue-600 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-blue-700/90 hover:to-blue-800/90 light:hover:from-blue-600 light:hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl border border-blue-500/30 light:border-blue-400/50 flex items-center gap-1 text-sm"
             onClick={onAddRow}
           >
             <svg
@@ -154,7 +189,7 @@ const DataTable: React.FC<DataTableProps> = ({
           </button>
           {!isEditMode && (
             <button
-              className="px-3 py-1.5 bg-gradient-to-r from-emerald-600/80 to-emerald-700/80 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-emerald-700/90 hover:to-emerald-800/90 transition-all duration-200 shadow-lg hover:shadow-xl border border-emerald-500/30 flex items-center gap-1 text-sm"
+              className="px-3 py-1.5 bg-gradient-to-r from-emerald-600/80 to-emerald-700/80 light:from-emerald-500 light:to-emerald-600 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-emerald-700/90 hover:to-emerald-800/90 light:hover:from-emerald-600 light:hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl border border-emerald-500/30 light:border-emerald-400/50 flex items-center gap-1 text-sm"
               onClick={onEditAll}
               disabled={isEditMode}
             >
@@ -177,7 +212,7 @@ const DataTable: React.FC<DataTableProps> = ({
           {isEditMode && (
             <>
               <button
-                className={`px-3 py-1.5 bg-gradient-to-r from-green-600/80 to-green-700/80 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-green-700/90 hover:to-green-800/90 transition-all duration-200 shadow-lg hover:shadow-xl border border-green-500/30 flex items-center gap-1 text-sm ${
+                className={`px-3 py-1.5 bg-gradient-to-r from-green-600/80 to-green-700/80 light:from-green-500 light:to-green-600 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-green-700/90 hover:to-green-800/90 light:hover:from-green-600 light:hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl border border-green-500/30 light:border-green-400/50 flex items-center gap-1 text-sm ${
                   saveLoading ? 'opacity-75 cursor-not-allowed' : ''
                 }`}
                 onClick={onSaveAll}
@@ -227,7 +262,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 )}
               </button>
               <button
-                className="px-3 py-1.5 bg-gradient-to-r from-gray-500/80 to-gray-600/80 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-gray-600/90 hover:to-gray-700/90 transition-all duration-200 shadow-lg hover:shadow-xl border border-gray-400/30 flex items-center gap-1 text-sm ml-2"
+                className="px-3 py-1.5 bg-gradient-to-r from-gray-500/80 to-gray-600/80 light:from-gray-400 light:to-gray-500 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-gray-600/90 hover:to-gray-700/90 light:hover:from-gray-500 light:hover:to-gray-600 transition-all duration-200 shadow-lg hover:shadow-xl border border-gray-400/30 light:border-gray-300/50 flex items-center gap-1 text-sm ml-2"
                 onClick={onCancelEdit}
               >
                 <svg
@@ -250,11 +285,11 @@ const DataTable: React.FC<DataTableProps> = ({
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-gray-900/50 rounded-lg overflow-hidden">
-          <thead className="bg-gray-700">
+        <table className="min-w-full bg-gray-900/50 rounded-lg overflow-hidden transition-colors duration-300 lightmode-table-bg">
+          <thead className="bg-gray-700 lightmode-bg">
             <tr>
               <th
-                className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600 transition-colors"
+                className="px-4 py-2 text-left text-xs font-medium text-white uppercase tracking-wider cursor-pointer hover:bg-gray-600 light:hover:bg-gray-200 transition-colors duration-200"
                 onClick={() => onSort("date")}
               >
                 <div className="flex items-center gap-2">
@@ -271,7 +306,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 </div>
               </th>
               <th
-                className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600 transition-colors"
+                className="px-4 py-2 text-left text-xs font-medium text-gray-300 light:text-black uppercase tracking-wider cursor-pointer hover:bg-gray-600 light:hover:bg-gray-200 transition-colors duration-200"
                 onClick={() => onSort("product_name")}
               >
                 <div className="flex items-center gap-2">
@@ -280,7 +315,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 </div>
               </th>
               <th
-                className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600 transition-colors"
+                className="px-4 py-2 text-left text-xs font-medium text-gray-300 light:text-black uppercase tracking-wider cursor-pointer hover:bg-gray-600 light:hover:bg-gray-200 transition-colors duration-200"
                 onClick={() => onSort("color")}
               >
                 <div className="flex items-center gap-2">
@@ -289,16 +324,16 @@ const DataTable: React.FC<DataTableProps> = ({
                 </div>
               </th>
               <th
-                className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600 transition-colors"
+                className="px-4 py-2 text-left text-xs font-medium text-gray-300 light:text-black uppercase tracking-wider cursor-pointer hover:bg-gray-600 light:hover:bg-gray-200 transition-colors duration-200"
                 onClick={() => onSort("amount")}
               >
                 <div className="flex items-center gap-2">
-                  จำนวน
+                  จำนวนเงิน
                   {getSortIcon("amount")}
                 </div>
               </th>
               <th
-                className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600 transition-colors"
+                className="px-4 py-2 text-left text-xs font-medium text-gray-300 light:text-black uppercase tracking-wider cursor-pointer hover:bg-gray-600 light:hover:bg-gray-200 transition-colors duration-200"
                 onClick={() => onSort("unit")}
               >
                 <div className="flex items-center gap-2">
@@ -307,7 +342,7 @@ const DataTable: React.FC<DataTableProps> = ({
                 </div>
               </th>
               <th
-                className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-600 transition-colors"
+                className="px-4 py-2 text-left text-xs font-medium text-gray-300 light:text-black uppercase tracking-wider cursor-pointer hover:bg-gray-600 light:hover:bg-gray-200 transition-colors duration-200"
                 onClick={() => onSort("total")}
               >
                 <div className="flex items-center gap-2">
@@ -316,51 +351,41 @@ const DataTable: React.FC<DataTableProps> = ({
                 </div>
               </th>
               {isEditMode && (
-                <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                <th className="px-4 py-2 text-left text-xs font-medium text-gray-300 light:text-black uppercase tracking-wider transition-colors duration-200">
                   การจัดการ
                 </th>
               )}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-700">
-            {(isEditMode ? editTable : getSortedData()).map(
+          <tbody className="divide-y divide-gray-700 light:divide-gray-200">
+            {(isEditMode ? getPaginatedEditTable() : getSortedData()).map(
               (item, idx) => (
                 <tr
                   key={item.id || idx}
-                  className="hover:bg-gray-800/50 transition-colors"
+                  className="hover:bg-gray-800/50 light:hover:bg-gray-100/80 transition-colors duration-200"
                 >
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
                     {isEditMode ? (
                       <input
-                        className="bg-gray-800 border border-gray-600 rounded px-2 py-1 w-full text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
                         type="date"
                         value={item.date}
-                        onChange={(e) =>
-                          onEditCell(
-                            idx,
-                            "date",
-                            e.target.value
-                          )
-                        }
+                        onChange={(e) => onEditCell(getEditIndex(item.id), "date", e.target.value)}
                       />
                     ) : (
                       item.date
                     )}
                   </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
                     {isEditMode ? (
                       <input
-                        className="bg-gray-800 border border-gray-600 rounded px-2 py-1 w-full text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
                         type="text"
                         value={item.product_name}
                         onChange={(e) => {
                           const value = e.target.value;
                           if (value.length <= 30) {
-                            onEditCell(
-                              idx,
-                              "product_name",
-                              value
-                            );
+                            onEditCell(getEditIndex(item.id), "product_name", value);
                           }
                         }}
                         maxLength={30}
@@ -369,20 +394,16 @@ const DataTable: React.FC<DataTableProps> = ({
                       item.product_name
                     )}
                   </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
                     {isEditMode ? (
                       <input
-                        className="bg-gray-800 border border-gray-600 rounded px-2 py-1 w-full text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
                         type="text"
                         value={item.color}
                         onChange={(e) => {
                           const value = e.target.value;
                           if (value.length <= 30) {
-                            onEditCell(
-                              idx,
-                              "color",
-                              value
-                            );
+                            onEditCell(getEditIndex(item.id), "color", value);
                           }
                         }}
                         maxLength={30}
@@ -391,21 +412,17 @@ const DataTable: React.FC<DataTableProps> = ({
                       item.color
                     )}
                   </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
                     {isEditMode ? (
                       <input
-                        className="bg-gray-800 border border-gray-600 rounded px-2 py-1 w-full text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
                         type="number"
                         value={item.amount === 0 ? "" : item.amount}
                         onChange={(e) => {
                           const value = e.target.value;
                           const numValue = value === "" ? 0 : Number(value);
                           if (numValue >= 0 && numValue <= 999999999) {
-                            onEditCell(
-                              idx,
-                              "amount",
-                              numValue
-                            );
+                            onEditCell(getEditIndex(item.id), "amount", numValue);
                           }
                         }}
                         min="0"
@@ -415,21 +432,17 @@ const DataTable: React.FC<DataTableProps> = ({
                       Math.floor(item.amount)
                     )}
                   </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300">
+                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
                     {isEditMode ? (
                       <input
-                        className="bg-gray-800 border border-gray-600 rounded px-2 py-1 w-full text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                        className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
                         type="number"
                         value={item.unit === 0 ? "" : item.unit}
                         onChange={(e) => {
                           const value = e.target.value;
                           const numValue = value === "" ? 0 : Number(value);
                           if (numValue >= 0 && numValue <= 999999999) {
-                            onEditCell(
-                              idx,
-                              "unit",
-                              numValue
-                            );
+                            onEditCell(getEditIndex(item.id), "unit", numValue);
                           }
                         }}
                         min="0"
@@ -439,13 +452,13 @@ const DataTable: React.FC<DataTableProps> = ({
                       Math.floor(item.unit)
                     )}
                   </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-green-400">
+                  <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-green-400 light:text-green-800 transition-colors duration-200">
                     {Math.floor(item.amount * item.unit)}
                   </td>
                   {isEditMode && (
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300">
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
                       <button
-                        onClick={() => onDeleteRow(item.id)}
+                        onClick={() => onDeleteRowInEditMode(item.id)}
                         className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1"
                       >
                         <svg
