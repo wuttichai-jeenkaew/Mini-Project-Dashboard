@@ -62,6 +62,9 @@ export default function Dashboard() {
   const [editModeTotal, setEditModeTotal] = useState(0); // จำนวนรายการในโหมดแก้ไข
   const pageSize = 10;
   const totalPages = Math.ceil(total / pageSize);
+  const [addTopicLoading, setAddTopicLoading] = useState(false);
+  const [editTopicLoading, setEditTopicLoading] = useState(false);
+  const [deleteTopicLoading, setDeleteTopicLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -80,10 +83,6 @@ export default function Dashboard() {
   >([]);
   const [showTopicChangeConfirm, setShowTopicChangeConfirm] = useState(false);
   const [pendingTopic, setPendingTopic] = useState<string>("");
-
-  const [addTopicLoading, setAddTopicLoading] = useState(false);
-  const [editTopicLoading, setEditTopicLoading] = useState(false);
-  const [deleteTopicLoading, setDeleteTopicLoading] = useState(false);
 
   const showToastMessage = (type: "success" | "error", message: string) => {
     setToastType(type);
@@ -175,18 +174,19 @@ export default function Dashboard() {
       setShowAddForm(false);
 
       showToastMessage("success", "เพิ่มข้อมูลสำเร็จ!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Add error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการเพิ่มข้อมูล";
-
-      if (err.response?.status === 401) {
-        errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (typeof err === 'object' && err !== null) {
+        const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
+        if (e.response?.status === 401) {
+          errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
+        } else if (e.response?.data?.error) {
+          errorMessage = e.response.data.error;
+        } else if (e.message) {
+          errorMessage = e.message;
+        }
       }
-
       showToastMessage("error", errorMessage);
     } finally {
       setLoading(false);
@@ -217,18 +217,19 @@ export default function Dashboard() {
       setTotal(response.data.total || 0);
 
       showToastMessage("success", "ลบข้อมูลสำเร็จ!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Delete error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการลบข้อมูล";
-
-      if (err.response?.status === 401) {
-        errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (typeof err === 'object' && err !== null) {
+        const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
+        if (e.response?.status === 401) {
+          errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
+        } else if (e.response?.data?.error) {
+          errorMessage = e.response.data.error;
+        } else if (e.message) {
+          errorMessage = e.message;
+        }
       }
-
       showToastMessage("error", errorMessage);
     } finally {
       setLoading(false);
@@ -297,18 +298,19 @@ export default function Dashboard() {
       }
       
       showToastMessage("success", successMessage);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Save error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการบันทึกข้อมูล";
-
-      if (err.response?.status === 401) {
-        errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (typeof err === 'object' && err !== null) {
+        const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
+        if (e.response?.status === 401) {
+          errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
+        } else if (e.response?.data?.error) {
+          errorMessage = e.response.data.error;
+        } else if (e.message) {
+          errorMessage = e.message;
+        }
       }
-
       showToastMessage("error", errorMessage);
     } finally {
       setSaveLoading(false);
@@ -316,7 +318,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleEditCell = (rowIdx: number, key: keyof FormData, value: any) => {
+  const handleEditCell = (rowIdx: number, key: keyof FormData, value: string | number) => {
     setEditTable((prev) =>
       prev.map((row, idx) => (idx === rowIdx ? { ...row, [key]: value } : row))
     );
@@ -537,20 +539,21 @@ export default function Dashboard() {
       const topicsResponse = await axios.get("/api/topic");
       setTopics(topicsResponse.data.data);
       showToastMessage("success", "เพิ่มหัวข้อสำเร็จ!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Add topic error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการเพิ่มหัวข้อ";
-      
-      if (err.response?.status === 401) {
-        errorMessage = "กรุณาเข้าสู่ระบบก่อนเพิ่มหัวข้อ";
-      } else if (err.response?.status === 409) {
-        errorMessage = "หัวข้อนี้มีอยู่แล้ว";
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (typeof err === 'object' && err !== null) {
+        const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
+        if (e.response?.status === 401) {
+          errorMessage = "กรุณาเข้าสู่ระบบก่อนเพิ่มหัวข้อ";
+        } else if (e.response?.status === 409) {
+          errorMessage = "หัวข้อนี้มีอยู่แล้ว";
+        } else if (e.response?.data?.error) {
+          errorMessage = e.response.data.error;
+        } else if (e.message) {
+          errorMessage = e.message;
+        }
       }
-      
       showToastMessage("error", errorMessage);
     } finally {
       setAddTopicLoading(false);
@@ -565,20 +568,21 @@ export default function Dashboard() {
       const topicsResponse = await axios.get("/api/topic");
       setTopics(topicsResponse.data.data);
       showToastMessage("success", "แก้ไขหัวข้อสำเร็จ!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Edit topic error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการแก้ไขหัวข้อ";
-      
-      if (err.response?.status === 401) {
-        errorMessage = "กรุณาเข้าสู่ระบบก่อนแก้ไขหัวข้อ";
-      } else if (err.response?.status === 409) {
-        errorMessage = "หัวข้อนี้มีอยู่แล้ว";
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (typeof err === 'object' && err !== null) {
+        const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
+        if (e.response?.status === 401) {
+          errorMessage = "กรุณาเข้าสู่ระบบก่อนแก้ไขหัวข้อ";
+        } else if (e.response?.status === 409) {
+          errorMessage = "หัวข้อนี้มีอยู่แล้ว";
+        } else if (e.response?.data?.error) {
+          errorMessage = e.response.data.error;
+        } else if (e.message) {
+          errorMessage = e.message;
+        }
       }
-      
       showToastMessage("error", errorMessage);
     } finally {
       setEditTopicLoading(false);
@@ -599,16 +603,19 @@ export default function Dashboard() {
         setTotal(0);
       }
       showToastMessage("success", "ลบหัวข้อสำเร็จ!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Delete topic error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการลบหัวข้อ";
       
-      if (err.response?.status === 401) {
-        errorMessage = "กรุณาเข้าสู่ระบบก่อนลบหัวข้อ";
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (typeof err === 'object' && err !== null) {
+        const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
+        if (e.response?.status === 401) {
+          errorMessage = "กรุณาเข้าสู่ระบบก่อนลบหัวข้อ";
+        } else if (e.response?.data?.error) {
+          errorMessage = e.response.data.error;
+        } else if (e.message) {
+          errorMessage = e.message;
+        }
       }
       
       showToastMessage("error", errorMessage);
@@ -870,10 +877,6 @@ export default function Dashboard() {
               total={isEditMode ? editModeTotal : total} 
               page={page} 
               totalPages={isEditMode ? Math.ceil(editModeTotal / pageSize) : totalPages} 
-              className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
-              cardClassName="bg-gradient-to-br from-blue-500/20 to-blue-600/20 light:from-blue-50/80 light:to-blue-100/60 backdrop-blur-md rounded-2xl p-6 border border-blue-500/30 light:border-blue-200/70 shadow-xl transform transition-all duration-700 hover:scale-105 hover:shadow-2xl animate-fade-in-up"
-              valueClassName="text-3xl font-bold text-white light:text-gray-900 mt-1 transition-all duration-300"
-              labelClassName="text-blue-300 light:text-blue-800 text-sm font-medium"
             />
 
               {(isEditMode ? editModeTotal > 0 : data.length > 0) ? (
@@ -886,15 +889,12 @@ export default function Dashboard() {
                     sortConfig={sortConfig}
                     startDate={startDate}
                     endDate={endDate}
-                    page={page}
-                    pageSize={pageSize}
                     onSort={handleSort}
                     onEditAll={handleEditAll}
                     onSaveAll={handleSaveAll}
                     onCancelEdit={handleCancelEdit}
                     onAddRow={handleAddRow}
                     onEditCell={handleEditCell}
-                    onDeleteRow={handleDeleteRow}
                     onDeleteRowInEditMode={handleDeleteRowInEditMode}
                     onStartDateChange={handleStartDateChange}
                     onEndDateChange={handleEndDateChange}

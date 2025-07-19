@@ -1,7 +1,7 @@
 import React from 'react';
 import DateFilter from '@/app/component/DateFilter/DateFilter';
 
-interface FormData {
+interface FormItemData {
   id: string;
   created_at: string;
   date: string;
@@ -13,35 +13,32 @@ interface FormData {
 }
 
 interface SortConfig {
-  key: keyof FormData | "total";
+  key: keyof FormItemData | "total";
   direction: "asc" | "desc";
 }
 
 interface DataTableProps {
-  data: FormData[];
-  editTable: FormData[];
+  data: FormItemData[];
+  editTable: FormItemData[];
   isEditMode: boolean;
   saveLoading?: boolean;
   sortConfig: SortConfig[];
   startDate: string;
   endDate: string;
-  page: number;
-  pageSize: number;
-  onSort: (key: keyof FormData | "total") => void;
+  onSort: (key: keyof FormItemData | "total") => void;
   onEditAll: () => void;
   onSaveAll: () => void;
   onCancelEdit: () => void;
   onAddRow: () => void;
-  onEditCell: (rowIdx: number, key: keyof FormData, value: any) => void;
-  onDeleteRow: (id: string) => void;
+  onEditCell: (rowIdx: number, key: keyof FormItemData, value: string | number) => void;
   onDeleteRowInEditMode: (id: string) => void;
   onStartDateChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onEndDateChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onApplyDateFilter: () => void;
   onClearDateFilter: () => void;
-  getSortIcon: (columnKey: keyof FormData | "total") => React.ReactNode;
+  getSortIcon: (columnKey: keyof FormItemData | "total") => React.ReactNode;
   setSortConfig: (config: SortConfig[]) => void;
-  onAddToEditTable: (item: FormData) => void;
+  onAddToEditTable: (item: FormItemData) => void;
 }
 
 const DataTable: React.FC<DataTableProps> = ({
@@ -52,15 +49,12 @@ const DataTable: React.FC<DataTableProps> = ({
   sortConfig,
   startDate,
   endDate,
-  page,
-  pageSize,
   onSort,
   onEditAll,
   onSaveAll,
   onCancelEdit,
   onAddRow,
   onEditCell,
-  onDeleteRow,
   onDeleteRowInEditMode,
   onStartDateChange,
   onEndDateChange,
@@ -70,55 +64,67 @@ const DataTable: React.FC<DataTableProps> = ({
   setSortConfig,
   onAddToEditTable,
 }) => {
-  const getSortedData = () => {
-    let sortableData = [...data];
+  const sortData = (dataToSort: FormItemData[]) => {
+    if (sortConfig.length === 0) return dataToSort;
 
-    if (sortConfig.length > 0) {
-      sortableData.sort((a, b) => {
-        for (const config of sortConfig) {
-          let aValue: any;
-          let bValue: any;
+    const sortableData = [...dataToSort];
+    sortableData.sort((a, b) => {
+      for (const config of sortConfig) {
+        let aValue: string | number;
+        let bValue: string | number;
 
-          if (config.key === "total") {
-            aValue = a.amount * a.unit;
-            bValue = b.amount * b.unit;
-          } else {
-            aValue = a[config.key];
-            bValue = b[config.key];
-          }
-
-          // Handle different data types
-          if (typeof aValue === "string") {
-            aValue = aValue.toLowerCase();
-            bValue = bValue.toLowerCase();
-          }
-
-          if (aValue < bValue) {
-            return config.direction === "asc" ? -1 : 1;
-          }
-          if (aValue > bValue) {
-            return config.direction === "asc" ? 1 : -1;
-          }
-          // If equal, continue to next sort criterion
+        if (config.key === "total") {
+          aValue = a.amount * a.unit;
+          bValue = b.amount * b.unit;
+        } else {
+          // Type guard for undefined and boolean
+          const aRaw = a[config.key];
+          const bRaw = b[config.key];
+          aValue = (typeof aRaw === "string" || typeof aRaw === "number") ? aRaw : "";
+          bValue = (typeof bRaw === "string" || typeof bRaw === "number") ? bRaw : "";
         }
-        return 0;
-      });
-    }
+
+        // Handle different data types
+        if (typeof aValue === "string" && typeof bValue === "string") {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+
+        if (aValue < bValue) {
+          return config.direction === "asc" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return config.direction === "asc" ? 1 : -1;
+        }
+        // If equal, continue to next sort criterion
+      }
+      return 0;
+    });
 
     return sortableData;
   };
 
+  const getSortedData = () => {
+    return sortData(data);
+  };
+
   const getPaginatedEditTable = () => {
-    // กรองเฉพาะข้อมูลที่ไม่ถูกลบออก
-    const filteredData = data.filter(item => 
-      !editTable.some(editItem => editItem.id === item.id && editItem._deleted)
-    );
+    // รวมข้อมูลจาก editTable (ถ้ามี) และ data (กรณีเพิ่มใหม่)
+    // ในโหมดแก้ไข ให้แสดงทุกแถว รวมถึงที่ _deleted: true
+    const merged: FormItemData[] = [];
+    // ใช้ editTable เป็นหลัก ถ้ามีข้อมูล
+    if (editTable.length > 0) {
+      for (const editItem of editTable) {
+        merged.push(editItem);
+      }
+    } else {
+      for (const item of data) {
+        merged.push(item);
+      }
+    }
     
-    // ใช้ข้อมูลที่แก้ไขแล้วจาก editTable ถ้ามี
-    return filteredData.map(item => {
-      const editedItem = editTable.find(editItem => editItem.id === item.id);
-      return editedItem || item;
-    });
+    // เรียงลำดับข้อมูลใน edit mode ด้วย
+    return sortData(merged);
   };
 
   const getEditIndex = (itemId: string) => {
@@ -160,12 +166,15 @@ const DataTable: React.FC<DataTableProps> = ({
           ข้อมูลสินค้า
         </h2>
         <div className="flex items-center gap-2">
-          {sortConfig.length > 0 && (
+          {(sortConfig.length > 0 || startDate || endDate) && (
             <button
               className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium transition-colors"
-              onClick={() => setSortConfig([])}
+              onClick={() => {
+                setSortConfig([]);
+                onClearDateFilter();
+              }}
             >
-              ล้างการเรียง
+              ล้างการกรอง
             </button>
           )}
           <button
@@ -358,129 +367,166 @@ const DataTable: React.FC<DataTableProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700 light:divide-gray-200">
-            {(isEditMode ? getPaginatedEditTable() : getSortedData()).map(
-              (item, idx) => (
-                <tr
-                  key={item.id || idx}
-                  className="hover:bg-gray-800/50 light:hover:bg-gray-100/80 transition-colors duration-200"
-                >
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
-                    {isEditMode ? (
-                      <input
-                        className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
-                        type="date"
-                        value={item.date}
-                        onChange={(e) => onEditCell(getEditIndex(item.id), "date", e.target.value)}
-                      />
-                    ) : (
-                      item.date
-                    )}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
-                    {isEditMode ? (
-                      <input
-                        className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
-                        type="text"
-                        value={item.product_name}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value.length <= 30) {
-                            onEditCell(getEditIndex(item.id), "product_name", value);
-                          }
-                        }}
-                        maxLength={30}
-                      />
-                    ) : (
-                      item.product_name
-                    )}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
-                    {isEditMode ? (
-                      <input
-                        className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
-                        type="text"
-                        value={item.color}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value.length <= 30) {
-                            onEditCell(getEditIndex(item.id), "color", value);
-                          }
-                        }}
-                        maxLength={30}
-                      />
-                    ) : (
-                      item.color
-                    )}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
-                    {isEditMode ? (
-                      <input
-                        className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
-                        type="number"
-                        value={item.amount === 0 ? "" : item.amount}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          const numValue = value === "" ? 0 : Number(value);
-                          if (numValue >= 0 && numValue <= 999999999) {
-                            onEditCell(getEditIndex(item.id), "amount", numValue);
-                          }
-                        }}
-                        min="0"
-                        max="999999999"
-                      />
-                    ) : (
-                      Math.floor(item.amount)
-                    )}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
-                    {isEditMode ? (
-                      <input
-                        className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
-                        type="number"
-                        value={item.unit === 0 ? "" : item.unit}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          const numValue = value === "" ? 0 : Number(value);
-                          if (numValue >= 0 && numValue <= 999999999) {
-                            onEditCell(getEditIndex(item.id), "unit", numValue);
-                          }
-                        }}
-                        min="0"
-                        max="999999999"
-                      />
-                    ) : (
-                      Math.floor(item.unit)
-                    )}
-                  </td>
-                  <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-green-400 light:text-green-800 transition-colors duration-200">
-                    {Math.floor(item.amount * item.unit)}
-                  </td>
-                  {isEditMode && (
-                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
-                      <button
-                        onClick={() => onDeleteRowInEditMode(item.id)}
-                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1"
-                      >
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                          />
-                        </svg>
-                        ลบ
-                      </button>
+            {(() => {
+              const rows = (isEditMode ? getPaginatedEditTable() : getSortedData());
+
+              // ถ้าไม่มีข้อมูลเลย
+              if (rows.length === 0) {
+                return (
+                  <tr>
+                    <td colSpan={isEditMode ? 8 : 7} className="px-4 py-8 text-center text-gray-400 light:text-gray-500 text-sm font-semibold">
+                      ไม่มีข้อมูลในตาราง
                     </td>
-                  )}
-                </tr>
-              )
-            )}
+                  </tr>
+                );
+              }
+
+              // render แถวตามลำดับเดิม (รวมทั้งแถวปกติและแถวที่ลบ)
+              return rows.map((item, idx) => {
+                // ถ้าเป็นแถวที่ถูกลบ ให้แสดงแถว Undo
+                if (isEditMode && item._deleted) {
+                  return (
+                    <tr
+                      key={item.id || `deleted-${idx}`}
+                      className="opacity-60 bg-red-900/30 light:bg-red-100/60"
+                    >
+                      <td colSpan={8} className="px-4 py-2 text-center text-sm text-red-400 light:text-red-700 font-semibold">
+                        <span className="mr-2">ข้อมูลนี้ถูกลบแล้ว</span>
+                        <button
+                          onClick={() => onEditCell(getEditIndex(item.id), '_deleted', 0)}
+                          className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded text-xs font-medium transition-colors"
+                        >
+                          Undo
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                }
+
+                // แถวปกติ
+                return (
+                  <tr
+                    key={item.id || idx}
+                    className="hover:bg-gray-800/50 light:hover:bg-gray-100/80 transition-colors duration-200"
+                  >
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
+                      {isEditMode ? (
+                        <input
+                          className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
+                          type="date"
+                          value={item.date}
+                          onChange={(e) => onEditCell(getEditIndex(item.id), "date", e.target.value)}
+                        />
+                      ) : (
+                        item.date
+                      )}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
+                      {isEditMode ? (
+                        <input
+                          className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
+                          type="text"
+                          value={item.product_name}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value.length <= 30) {
+                              onEditCell(getEditIndex(item.id), "product_name", value);
+                            }
+                          }}
+                          maxLength={30}
+                        />
+                      ) : (
+                        item.product_name
+                      )}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
+                      {isEditMode ? (
+                        <input
+                          className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
+                          type="text"
+                          value={item.color}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value.length <= 30) {
+                              onEditCell(getEditIndex(item.id), "color", value);
+                            }
+                          }}
+                          maxLength={30}
+                        />
+                      ) : (
+                        item.color
+                      )}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
+                      {isEditMode ? (
+                        <input
+                          className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
+                          type="number"
+                          value={item.amount === 0 ? "" : item.amount}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const numValue = value === "" ? 0 : Number(value);
+                            if (numValue >= 0 && numValue <= 999999999) {
+                              onEditCell(getEditIndex(item.id), "amount", numValue);
+                            }
+                          }}
+                          min="0"
+                          max="999999999"
+                        />
+                      ) : (
+                        Math.floor(item.amount)
+                      )}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
+                      {isEditMode ? (
+                        <input
+                          className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
+                          type="number"
+                          value={item.unit === 0 ? "" : item.unit}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const numValue = value === "" ? 0 : Number(value);
+                            if (numValue >= 0 && numValue <= 999999999) {
+                              onEditCell(getEditIndex(item.id), "unit", numValue);
+                            }
+                          }}
+                          min="0"
+                          max="999999999"
+                        />
+                      ) : (
+                        Math.floor(item.unit)
+                      )}
+                    </td>
+                    <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-green-400 light:text-green-800 transition-colors duration-200">
+                      {Math.floor(item.amount * item.unit)}
+                    </td>
+                    {isEditMode && (
+                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
+                        <button
+                          onClick={() => onDeleteRowInEditMode(item.id)}
+                          className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs font-medium transition-colors flex items-center gap-1"
+                        >
+                          <svg
+                            className="w-3 h-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth="2"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                          ลบ
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                );
+              });
+            })()}
           </tbody>
         </table>
       </div>

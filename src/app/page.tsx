@@ -60,7 +60,7 @@ export default function Home() {
         // Fetch total records count (sum of all records from all topics)
         let totalRecords = 0;
         if (totalTopics > 0) {
-          const recordsPromises = topicsResponse.data.data.map(async (topic: any) => {
+          const recordsPromises = topicsResponse.data.data.map(async (topic: { id: string }) => {
             try {
               const recordsResponse = await axios.get(`/api/form?topic=${topic.id}&pageSize=1`);
               return recordsResponse.data.total || 0;
@@ -80,7 +80,7 @@ export default function Home() {
           sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
           const dateFilter = sevenDaysAgo.toISOString().split('T')[0];
 
-          const recentPromises = topicsResponse.data.data.map(async (topic: any) => {
+          const recentPromises = topicsResponse.data.data.map(async (topic: { id: string }) => {
             try {
               const recentResponse = await axios.get(`/api/form?topic=${topic.id}&startDate=${dateFilter}&pageSize=1000`);
               return recentResponse.data.data?.length || 0;

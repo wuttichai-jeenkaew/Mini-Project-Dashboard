@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { optionalAuth } from "@/app/utils/auth";
 
 export async function GET() {
-  const { user, error, supabase } = await optionalAuth();
+  const { error, supabase } = await optionalAuth();
   
   if (error) {
     return error;

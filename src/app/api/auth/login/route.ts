@@ -37,7 +37,8 @@ export async function POST(request: Request) {
     });
 
     return response;
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Unexpected error" }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unexpected error";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

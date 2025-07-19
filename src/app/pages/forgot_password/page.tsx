@@ -44,8 +44,13 @@ export default function ForgotPasswordPage() {
       setTimeout(() => {
         router.push("/pages/login");
       }, 5000);
-    } catch (err: any) {
-      setError(err?.response?.data?.error || "เกิดข้อผิดพลาดในการส่งอีเมล กรุณาลองใหม่อีกครั้ง");
+    } catch (err: unknown) {
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        const e = err as { response?: { data?: { error?: string } } };
+        setError(e.response?.data?.error || "เกิดข้อผิดพลาดในการส่งอีเมล กรุณาลองใหม่อีกครั้ง");
+      } else {
+        setError("เกิดข้อผิดพลาดในการส่งอีเมล กรุณาลองใหม่อีกครั้ง");
+      }
     } finally {
       setLoading(false);
     }

@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/app/utils/auth";
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(
+  request: Request, 
+  context: { params: Promise<{ id: string }> }
+) {
   const { user, error, supabase } = await requireAuth();
   
   if (error) {
     return error;
   }
 
+  const params = await context.params;
   const id = params.id;
   const body = await request.json();
 
@@ -26,13 +30,17 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   return NextResponse.json({ success: true });
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request, 
+  context: { params: Promise<{ id: string }> }
+) {
   const { user, error, supabase } = await requireAuth();
   
   if (error) {
     return error;
   }
 
+  const params = await context.params;
   const id = params.id;
 
   const { error: deleteError } = await supabase!

@@ -47,8 +47,13 @@ export default function RegisterPage() {
       setTimeout(() => {
         router.push("/");
       }, 1000); //
-    } catch (err: any) {
-      setError(err?.response?.data?.error || "เกิดข้อผิดพลาด");
+    } catch (err: unknown) {
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        const e = err as { response?: { data?: { error?: string } } };
+        setError(e.response?.data?.error || "เกิดข้อผิดพลาด");
+      } else {
+        setError("เกิดข้อผิดพลาด");
+      }
     } finally {
       setLoading(false);
     }

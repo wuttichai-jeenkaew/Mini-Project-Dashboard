@@ -1,3 +1,8 @@
+interface TopicStat {
+  name: string;
+  count: number;
+  // เพิ่ม property อื่น ๆ ตามที่ใช้งานจริง
+}
 'use client';
 
 import Navbar from "@/app/component/Navbar/Navbar";
@@ -58,14 +63,24 @@ function useCountAnimation(end: number, duration: number = 2000) {
 
 export default function GraphDashboard() {
   const [chartType, setChartType] = useState<ChartType>('bar');
-  const [chartData, setChartData] = useState<any>({
+  type ChartDataType = {
+    labels: string[];
+    datasets: Array<{
+      label: string;
+      data: number[];
+      backgroundColor: string[];
+      borderColor: string[];
+      borderWidth: number;
+    }>;
+  };
+  const [chartData, setChartData] = useState<ChartDataType>({
     labels: [],
     datasets: [
       {
         label: "จำนวนรายการข้อมูล",
         data: [],
-        backgroundColor: "rgba(99, 102, 241, 0.7)",
-        borderColor: "rgba(99, 102, 241, 1)",
+        backgroundColor: [],
+        borderColor: [],
         borderWidth: 2,
       },
     ],
@@ -74,13 +89,13 @@ export default function GraphDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [topN, setTopN] = useState(10); // แสดงเฉพาะ Top N
-  const [originalData, setOriginalData] = useState<any[]>([]); // เก็บข้อมูลต้นฉบับ
+  const [originalData, setOriginalData] = useState<TopicStat[]>([]); // เก็บข้อมูลต้นฉบับ
   const [searchTerm, setSearchTerm] = useState(''); // ค้นหา
-  const [filteredData, setFilteredData] = useState<any[]>([]); // ข้อมูลที่ถูกกรอง
+  const [filteredData, setFilteredData] = useState<TopicStat[]>([]); // ข้อมูลที่ถูกกรอง
 
   // Animation values for stats cards
   const totalTopics = originalData.length; // ใช้ข้อมูลต้นฉบับ
-  const totalItems = originalData.reduce((sum: number, item: any) => sum + item.count, 0);
+  const totalItems = originalData.reduce((sum: number, item: TopicStat) => sum + item.count, 0);
   
   // คำนวณข้อมูลที่แสดงผล
   const getDisplayedData = () => {
@@ -88,14 +103,14 @@ export default function GraphDashboard() {
       // โหมดปกติ
       return {
         topics: Math.min(topN, originalData.length),
-        items: originalData.slice(0, topN).reduce((sum: number, item: any) => sum + item.count, 0),
+        items: originalData.slice(0, topN).reduce((sum: number, item: TopicStat) => sum + item.count, 0),
         mode: 'normal'
       };
     } else {
       // โหมดค้นหา
       return {
         topics: filteredData.length,
-        items: filteredData.reduce((sum: number, item: any) => sum + item.count, 0),
+        items: filteredData.reduce((sum: number, item: TopicStat) => sum + item.count, 0),
         mode: 'search'
       };
     }
@@ -109,7 +124,6 @@ export default function GraphDashboard() {
   const animatedTopics = useCountAnimation(totalTopics, 1200);
   const animatedItems = useCountAnimation(totalItems, 1500);
   const animatedDisplayedTopics = useCountAnimation(displayedData.topics, animationDuration);
-  const animatedDisplayedItems = useCountAnimation(displayedData.items, animationDuration + 200);
 
   // ฟังก์ชันสำหรับเลือกประเภทกราฟ
   const getChartComponent = () => {
@@ -146,10 +160,9 @@ export default function GraphDashboard() {
       animation: {
         duration: animationDuration,
         easing: 'easeOutQuart' as const,
-        delay: (context: any) => {
+        delay: (context: { type: string; mode: string; dataIndex: number }) => {
           let delay = 0;
           if (context.type === 'data' && context.mode === 'default') {
-            // ลด delay สำหรับโหมดค้นหา
             delay = searchTerm.trim() !== '' ? context.dataIndex * 50 : context.dataIndex * 100;
           }
           return delay;
@@ -186,13 +199,18 @@ export default function GraphDashboard() {
           titleFont: { size: window.innerWidth < 640 ? 12 : 14 },
           bodyFont: { size: window.innerWidth < 640 ? 11 : 13 },
           callbacks: {
-            title: function(context: any) {
-              const title = context[0].label;
-              // ตัดข้อความยาวสำหรับ mobile
+            title: function<TType extends import('chart.js').ChartType>(tooltipItems: import('chart.js').TooltipItem<TType>[]) {
+              const title = tooltipItems[0]?.label ?? '';
               return window.innerWidth < 640 && title.length > 20 ? title.substring(0, 20) + '...' : title;
             },
-            label: function(context: any) {
-              return `จำนวน: ${context.parsed.y || context.parsed} รายการ`;
+            label: function<TType extends import('chart.js').ChartType>(tooltipItem: import('chart.js').TooltipItem<TType>) {
+              // For Pie/Doughnut, tooltipItem.parsed is a number
+              if (typeof tooltipItem.parsed === 'number') {
+                return `จำนวน: ${tooltipItem.parsed} รายการ`;
+              } else if (typeof tooltipItem.parsed === 'object' && tooltipItem.parsed !== null && 'y' in tooltipItem.parsed) {
+                return `จำนวน: ${(tooltipItem.parsed as { y?: number }).y} รายการ`;
+              }
+              return 'จำนวน: - รายการ';
             }
           }
         }
@@ -254,15 +272,11 @@ export default function GraphDashboard() {
   };
 
   // ฟังก์ชันสำหรับสร้างข้อมูลกราฟตามประเภท
-  const getChartData = (topicStats: any[], limitTopN: number = topN) => {
-    const sortedStats = topicStats.sort((a: any, b: any) => b.count - a.count);
-    
-    // จำกัดจำนวนหัวข้อที่แสดง
-    let displayData = sortedStats.slice(0, limitTopN);
-    
-    // ถ้ามีหัวข้อเหลือ ให้รวมเป็น "อื่นๆ"
+  const getChartData = (topicStats: TopicStat[], limitTopN: number = topN) => {
+    const sortedStats = topicStats.sort((a: TopicStat, b: TopicStat) => b.count - a.count);
+    const displayData: TopicStat[] = [...sortedStats.slice(0, limitTopN)];
     if (sortedStats.length > limitTopN) {
-      const othersCount = sortedStats.slice(limitTopN).reduce((sum: number, item: any) => sum + item.count, 0);
+      const othersCount = sortedStats.slice(limitTopN).reduce((sum: number, item: TopicStat) => sum + item.count, 0);
       if (othersCount > 0) {
         displayData.push({
           name: `อื่นๆ (${sortedStats.length - limitTopN} หัวข้อ)`,
@@ -270,7 +284,7 @@ export default function GraphDashboard() {
         });
       }
     }
-    
+
     const colors = [
       "rgba(99, 102, 241, 0.8)",    // Blue
       "rgba(16, 185, 129, 0.8)",    // Green
@@ -295,16 +309,17 @@ export default function GraphDashboard() {
       "rgba(107, 114, 128, 1)",     // Gray for "อื่นๆ"
     ];
 
+    // สร้าง datasets ให้ถูกต้องสำหรับ bar/line/pie/doughnut
     return {
-      labels: displayData.map((item: any) => item.name),
+      labels: displayData.map((item: TopicStat) => item.name),
       datasets: [
         {
           label: "จำนวนรายการข้อมูล",
-          data: displayData.map((item: any) => item.count),
-          backgroundColor: displayData.map((item: any, index: number) => colors[index % colors.length]),
-          borderColor: displayData.map((item: any, index: number) => borderColors[index % borderColors.length]),
+          data: displayData.map((item: TopicStat) => item.count),
+          backgroundColor: displayData.map((_, idx) => colors[idx % colors.length]),
+          borderColor: displayData.map((_, idx) => borderColors[idx % borderColors.length]),
           borderWidth: 2,
-        },
+        }
       ],
     };
   };
@@ -654,7 +669,7 @@ export default function GraphDashboard() {
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 sm:w-3 sm:h-3 bg-cyan-500 light:bg-cyan-700 rounded-full animate-pulse flex-shrink-0"></div>
                         <span className="text-cyan-300 light:text-cyan-800">
-                          ผลการค้นหา "{searchTerm}" {filteredData.length} หัวข้อ
+                          ผลการค้นหา &quot;{searchTerm}&quot; {filteredData.length} หัวข้อ
                         </span>
                       </div>
                       <div className="text-cyan-400 light:text-cyan-700 text-right">

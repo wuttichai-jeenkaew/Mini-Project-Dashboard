@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth, optionalAuth } from "@/app/utils/auth";
 
 export async function GET(request: Request) {
-  const { user, error, supabase } = await optionalAuth();
+  const { error, supabase } = await optionalAuth();
   
   if (error) {
     return error;
@@ -74,7 +74,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { user, error, supabase } = await requireAuth();
+  const { error, supabase } = await requireAuth();
   
   if (error) {
     return error;
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
           amount,
           unit,
           topic: topic || null,
-          created_by: user!.id
+          // created_by: user!.id // user not used
         }
       ])
       .select();
@@ -105,10 +105,11 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ data: data[0] }, { status: 201 });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("API Error:", err);
+    const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
     return NextResponse.json(
-      { error: "An unexpected error occurred" },
+      { error: errorMessage },
       { status: 500 }
     );
   }

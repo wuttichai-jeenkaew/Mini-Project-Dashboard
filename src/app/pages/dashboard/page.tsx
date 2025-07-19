@@ -18,7 +18,7 @@ import EmptyState from "@/app/component/EmptyState/EmptyState";
 // Configure axios to include credentials (cookies) with all requests
 axios.defaults.withCredentials = true;
 
-interface FormData {
+interface FormItemData {
   id: string;
   created_at: string;
   date: string;
@@ -26,6 +26,7 @@ interface FormData {
   amount: number;
   unit: number;
   product_name: string;
+  _deleted?: boolean;
 }
 
 interface TopicData {
@@ -54,7 +55,7 @@ export default function Dashboard() {
     setIsEditMode(false);
     setEditTable([]);
   };
-  const [data, setData] = useState<FormData[]>([]);
+  const [data, setData] = useState<FormItemData[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const pageSize = 10;
@@ -62,7 +63,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editTable, setEditTable] = useState<FormData[]>([]);
+  const [editTable, setEditTable] = useState<FormItemData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [actualSearchQuery, setActualSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -71,7 +72,7 @@ export default function Dashboard() {
   const [actualEndDate, setActualEndDate] = useState("");
   const [sortConfig, setSortConfig] = useState<
     Array<{
-      key: keyof FormData | "total";
+      key: keyof FormItemData | "total";
       direction: "asc" | "desc";
     }>
   >([]);
@@ -172,18 +173,19 @@ export default function Dashboard() {
       setShowAddForm(false);
 
       showToastMessage("success", "เพิ่มข้อมูลสำเร็จ!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Add error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการเพิ่มข้อมูล";
-
-      if (err.response?.status === 401) {
-        errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (typeof err === "object" && err !== null) {
+        const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
+        if (e.response?.status === 401) {
+          errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
+        } else if (e.response?.data?.error) {
+          errorMessage = e.response.data.error;
+        } else if (e.message) {
+          errorMessage = e.message;
+        }
       }
-
       showToastMessage("error", errorMessage);
     } finally {
       setLoading(false);
@@ -214,18 +216,19 @@ export default function Dashboard() {
       setTotal(response.data.total || 0);
 
       showToastMessage("success", "ลบข้อมูลสำเร็จ!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Delete error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการลบข้อมูล";
-
-      if (err.response?.status === 401) {
-        errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (typeof err === "object" && err !== null) {
+        const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
+        if (e.response?.status === 401) {
+          errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
+        } else if (e.response?.data?.error) {
+          errorMessage = e.response.data.error;
+        } else if (e.message) {
+          errorMessage = e.message;
+        }
       }
-
       showToastMessage("error", errorMessage);
     } finally {
       setLoading(false);
@@ -245,17 +248,32 @@ export default function Dashboard() {
   const handleSaveAll = async () => {
     try {
       setSaveLoading(true);
-      await Promise.all(
-        editTable.map((row) =>
-          axios.patch(`/api/form/${row.id}`, {
-            date: row.date,
-            product_name: row.product_name,
-            color: row.color,
-            amount: row.amount,
-            unit: row.unit,
-          })
-        )
-      );
+      
+      // แยกข้อมูลที่ต้องอัพเดทและลบ
+      const rowsToUpdate = editTable.filter(row => !row._deleted);
+      const rowsToDelete = editTable.filter(row => row._deleted);
+      
+      // อัพเดทข้อมูล
+      if (rowsToUpdate.length > 0) {
+        await Promise.all(
+          rowsToUpdate.map((row) =>
+            axios.patch(`/api/form/${row.id}`, {
+              date: row.date,
+              product_name: row.product_name,
+              color: row.color,
+              amount: row.amount,
+              unit: row.unit,
+            })
+          )
+        );
+      }
+      
+      // ลบข้อมูล
+      if (rowsToDelete.length > 0) {
+        await Promise.all(
+          rowsToDelete.map((row) => axios.delete(`/api/form/${row.id}`))
+        );
+      }
 
       setLoading(true);
       const response = await axios.get(
@@ -265,22 +283,26 @@ export default function Dashboard() {
       );
       setData(response.data.data);
       setTotal(response.data.total || 0);
+      
+      // ออกจาก edit mode หลังจากรีเฟรชข้อมูลเสร็จแล้ว
       setIsEditMode(false);
+      setEditTable([]);
 
       // แสดง toast notification สำเร็จ
       showToastMessage("success", "บันทึกข้อมูลสำเร็จ!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Save error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการบันทึกข้อมูล";
-
-      if (err.response?.status === 401) {
-        errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (typeof err === "object" && err !== null) {
+        const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
+        if (e.response?.status === 401) {
+          errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
+        } else if (e.response?.data?.error) {
+          errorMessage = e.response.data.error;
+        } else if (e.message) {
+          errorMessage = e.message;
+        }
       }
-
       showToastMessage("error", errorMessage);
     } finally {
       setSaveLoading(false);
@@ -288,7 +310,11 @@ export default function Dashboard() {
     }
   };
 
-  const handleEditCell = (rowIdx: number, key: keyof FormData, value: any) => {
+  const handleEditCell = (
+    rowIdx: number,
+    key: keyof FormItemData,
+    value: string | number
+  ) => {
     setEditTable((prev) =>
       prev.map((row, idx) => (idx === rowIdx ? { ...row, [key]: value } : row))
     );
@@ -326,7 +352,7 @@ export default function Dashboard() {
     setEndDate(e.target.value);
   };
 
-  const handleSort = (key: keyof FormData | "total") => {
+  const handleSort = (key: keyof FormItemData | "total") => {
     setSortConfig((prevConfig) => {
       // ถ้าไม่มี sort หรือเลือกคอลัมน์ใหม่ ให้เริ่มต้นใหม่
       if (prevConfig.length === 0 || prevConfig[0].key !== key) {
@@ -344,7 +370,7 @@ export default function Dashboard() {
     });
   };
 
-  const getSortIcon = (columnKey: keyof FormData | "total") => {
+  const getSortIcon = (columnKey: keyof FormItemData | "total") => {
     const sortItem = sortConfig.find((config) => config.key === columnKey);
 
     if (!sortItem) {
@@ -436,13 +462,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     // โหลดข้อมูล form เมื่อเลือก topic แล้ว
-    if (!selectedTopic) {
-      setData([]);
-      setTotal(0);
-      return;
-    }
-
     const fetchData = async () => {
+      if (!selectedTopic) {
+        setData([]);
+        setTotal(0);
+        return;
+      }
       setLoading(true);
       try {
         const response = await axios.get(
@@ -469,20 +494,21 @@ export default function Dashboard() {
       const topicsResponse = await axios.get("/api/topic");
       setTopics(topicsResponse.data.data);
       showToastMessage("success", "เพิ่มหัวข้อสำเร็จ!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Add topic error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการเพิ่มหัวข้อ";
-      
-      if (err.response?.status === 401) {
-        errorMessage = "กรุณาเข้าสู่ระบบก่อนเพิ่มหัวข้อ";
-      } else if (err.response?.status === 409) {
-        errorMessage = "หัวข้อนี้มีอยู่แล้ว";
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (typeof err === "object" && err !== null) {
+        const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
+        if (e.response?.status === 401) {
+          errorMessage = "กรุณาเข้าสู่ระบบก่อนเพิ่มหัวข้อ";
+        } else if (e.response?.status === 409) {
+          errorMessage = "หัวข้อนี้มีอยู่แล้ว";
+        } else if (e.response?.data?.error) {
+          errorMessage = e.response.data.error;
+        } else if (e.message) {
+          errorMessage = e.message;
+        }
       }
-      
       showToastMessage("error", errorMessage);
     } finally {
       setAddTopicLoading(false);
@@ -497,20 +523,21 @@ export default function Dashboard() {
       const topicsResponse = await axios.get("/api/topic");
       setTopics(topicsResponse.data.data);
       showToastMessage("success", "แก้ไขหัวข้อสำเร็จ!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Edit topic error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการแก้ไขหัวข้อ";
-      
-      if (err.response?.status === 401) {
-        errorMessage = "กรุณาเข้าสู่ระบบก่อนแก้ไขหัวข้อ";
-      } else if (err.response?.status === 409) {
-        errorMessage = "หัวข้อนี้มีอยู่แล้ว";
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (typeof err === "object" && err !== null) {
+        const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
+        if (e.response?.status === 401) {
+          errorMessage = "กรุณาเข้าสู่ระบบก่อนแก้ไขหัวข้อ";
+        } else if (e.response?.status === 409) {
+          errorMessage = "หัวข้อนี้มีอยู่แล้ว";
+        } else if (e.response?.data?.error) {
+          errorMessage = e.response.data.error;
+        } else if (e.message) {
+          errorMessage = e.message;
+        }
       }
-      
       showToastMessage("error", errorMessage);
     } finally {
       setEditTopicLoading(false);
@@ -531,18 +558,19 @@ export default function Dashboard() {
         setTotal(0);
       }
       showToastMessage("success", "ลบหัวข้อสำเร็จ!");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Delete topic error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการลบหัวข้อ";
-      
-      if (err.response?.status === 401) {
-        errorMessage = "กรุณาเข้าสู่ระบบก่อนลบหัวข้อ";
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
+      if (typeof err === "object" && err !== null) {
+        const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
+        if (e.response?.status === 401) {
+          errorMessage = "กรุณาเข้าสู่ระบบก่อนลบหัวข้อ";
+        } else if (e.response?.data?.error) {
+          errorMessage = e.response.data.error;
+        } else if (e.message) {
+          errorMessage = e.message;
+        }
       }
-      
       showToastMessage("error", errorMessage);
     } finally {
       setDeleteTopicLoading(false);
@@ -794,7 +822,8 @@ export default function Dashboard() {
               {/* Stats Cards */}
               <StatsCards total={total} page={page} totalPages={totalPages} />
 
-              {data.length > 0 ? (
+              {/* แสดง DataTable เสมอเมื่ออยู่ใน edit mode หรือมีข้อมูล */}
+              {(data.length > 0 || isEditMode ) ? (
                 <>
                   <DataTable
                     data={data}
@@ -810,7 +839,14 @@ export default function Dashboard() {
                     onCancelEdit={handleCancelEdit}
                     onAddRow={handleAddRow}
                     onEditCell={handleEditCell}
-                    onDeleteRow={handleDeleteRow}
+                    onDeleteRowInEditMode={id => {
+                      setEditTable(prev => prev.map(item => 
+                        item.id === id ? {...item, _deleted: true} : item
+                      ));
+                    }}
+                    onAddToEditTable={item => {
+                      setEditTable(prev => [...prev, item]);
+                    }}
                     onStartDateChange={handleStartDateChange}
                     onEndDateChange={handleEndDateChange}
                     onApplyDateFilter={handleApplyDateFilter}
@@ -819,11 +855,13 @@ export default function Dashboard() {
                     setSortConfig={setSortConfig}
                   />
 
-                  <Pagination
-                    currentPage={page}
-                    totalPages={totalPages}
-                    onPageChange={setPage}
-                  />
+                  {!isEditMode && (
+                    <Pagination
+                      currentPage={page}
+                      totalPages={totalPages}
+                      onPageChange={setPage}
+                    />
+                  )}
                 </>
               ) : (
                 <EmptyState onAddData={handleAddRow} />

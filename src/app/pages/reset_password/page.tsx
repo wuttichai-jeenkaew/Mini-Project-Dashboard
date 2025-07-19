@@ -116,9 +116,15 @@ export default function ResetPasswordPage() {
       setTimeout(() => {
         router.push("/pages/login");
       }, 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Handle axios errors
-      const errorMessage = err.response?.data?.error || err.message || "เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน";
+      let errorMessage = "เกิดข้อผิดพลาดในการรีเซ็ตรหัสผ่าน";
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        const e = err as { response?: { data?: { error?: string } }; message?: string };
+        errorMessage = e.response?.data?.error || e.message || errorMessage;
+      } else if (typeof err === 'object' && err !== null && 'message' in err) {
+        errorMessage = (err as { message?: string }).message || errorMessage;
+      }
       setError(errorMessage);
     } finally {
       setLoading(false);

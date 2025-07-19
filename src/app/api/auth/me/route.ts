@@ -10,11 +10,11 @@ export async function GET() {
 
   try {
     // Get user profile from database
-    const { data: profile, error: profileError } = await supabase!
-      .from("user_profile")
-      .select("name")
-      .eq("id", user!.id)
-      .single();
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
 
     const userData = {
       id: user!.id,
@@ -25,7 +25,8 @@ export async function GET() {
     return NextResponse.json({
       user: userData,
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err?.message || "Unexpected error" }, { status: 500 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unexpected error";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

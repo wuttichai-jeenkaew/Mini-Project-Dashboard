@@ -19,10 +19,11 @@ export async function requireAuth() {
       error: null,
       supabase
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unexpected error";
     return {
       user: null,
-      error: NextResponse.json({ error: err?.message || "Unexpected error" }, { status: 500 }),
+      error: NextResponse.json({ error: errorMessage }, { status: 500 }),
       supabase: null
     };
   }
@@ -39,10 +40,11 @@ export async function optionalAuth() {
       error: null,
       supabase
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Unexpected error";
     return {
       user: null,
-      error: NextResponse.json({ error: err?.message || "Unexpected error" }, { status: 500 }),
+      error: NextResponse.json({ error: errorMessage }, { status: 500 }),
       supabase: null
     };
   }

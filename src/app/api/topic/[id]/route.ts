@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import createSupabaseClient from '../../../utils/supabase';
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(
+  request: Request, 
+  context: { params: Promise<{ id: string }> }
+) {
   try {
     const supabase = await createSupabaseClient();
     const body = await request.json();
     const name = body.name?.trim();
+    const params = await context.params;
     const topicId = params.id;
     
     // ตรวจสอบ login
@@ -59,9 +63,13 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request, 
+  context: { params: Promise<{ id: string }> }
+) {
   try {
     const supabase = await createSupabaseClient();
+    const params = await context.params;
     const topicId = params.id;
     
     // ตรวจสอบ login

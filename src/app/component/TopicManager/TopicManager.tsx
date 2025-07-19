@@ -9,7 +9,7 @@ interface TopicManagerProps {
   topics: Topic[];
   selectedTopic: string;
   topicsLoading: boolean;
-  user: any;
+  user: { id: string; email: string } | null;
   onTopicChange: (topicId: string) => void;
   onAddTopic: (topicName: string) => Promise<void>;
   onEditTopic: (topicId: string, topicName: string) => Promise<void>;
@@ -246,7 +246,7 @@ const TopicManager: React.FC<TopicManagerProps> = ({
           <div className="bg-gray-900 rounded-lg p-6 shadow-xl w-full max-w-md">
             <h3 className="text-lg font-bold text-white mb-4">ลบหัวข้อ</h3>
             <p className="text-gray-300 mb-4">
-              คุณต้องการลบหัวข้อ <span className="font-semibold text-white">"{deleteTopicName}"</span> หรือไม่?
+              คุณต้องการลบหัวข้อ <span className="font-semibold text-white">&quot;{deleteTopicName}&quot;</span> หรือไม่?
             </p>
             <div className="flex justify-end gap-2">
               <button

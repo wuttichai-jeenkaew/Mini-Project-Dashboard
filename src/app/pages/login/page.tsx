@@ -55,11 +55,16 @@ export default function LoginPage() {
       setTimeout(() => {
         router.push("/");
       }, 1000); 
-    } catch (err: any) {
-      if (err?.response?.data?.error === "Invalid login credentials") {
-        setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+    } catch (err: unknown) {
+      if (typeof err === 'object' && err !== null && 'response' in err) {
+        const e = err as { response?: { data?: { error?: string } } };
+        if (e.response?.data?.error === "Invalid login credentials") {
+          setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+        } else {
+          setError(e.response?.data?.error || "เกิดข้อผิดพลาด");
+        }
       } else {
-        setError(err?.response?.data?.error || "เกิดข้อผิดพลาด");
+        setError("เกิดข้อผิดพลาด");
       }
     } finally {
       setLoginLoading(false);
