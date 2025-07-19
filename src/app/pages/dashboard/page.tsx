@@ -54,6 +54,7 @@ export default function Dashboard() {
   const handleCancelEdit = () => {
     setIsEditMode(false);
     setEditTable([]);
+    setEditStatesByPage({});
   };
   const [data, setData] = useState<FormItemData[]>([]);
   const [page, setPage] = useState(1);
@@ -64,6 +65,7 @@ export default function Dashboard() {
   const [saveLoading, setSaveLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editTable, setEditTable] = useState<FormItemData[]>([]);
+  const [editStatesByPage, setEditStatesByPage] = useState<Record<number, FormItemData[]>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [actualSearchQuery, setActualSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -112,6 +114,7 @@ export default function Dashboard() {
     // ออกจาก edit mode และเปลี่ยนหัวข้อ
     setIsEditMode(false);
     setEditTable([]);
+    setEditStatesByPage({});
     setSelectedTopic(pendingTopic);
     setPage(1);
     setSearchQuery("");
@@ -242,16 +245,28 @@ export default function Dashboard() {
       return;
     }
     setIsEditMode(true);
-    setEditTable(JSON.parse(JSON.stringify(data)));
+    // เริ่มต้นสร้าง editStatesByPage สำหรับหน้าปัจจุบัน
+    const currentPageEditState = JSON.parse(JSON.stringify(data));
+    setEditTable(currentPageEditState);
+    setEditStatesByPage(prev => ({
+      ...prev,
+      [page]: currentPageEditState
+    }));
   };
 
   const handleSaveAll = async () => {
     try {
       setSaveLoading(true);
       
+      // รวบรวมข้อมูลจากทุกหน้าใน editStatesByPage
+      const allEditedData: FormItemData[] = [];
+      Object.values(editStatesByPage).forEach(pageData => {
+        allEditedData.push(...pageData);
+      });
+      
       // แยกข้อมูลที่ต้องอัพเดทและลบ
-      const rowsToUpdate = editTable.filter(row => !row._deleted);
-      const rowsToDelete = editTable.filter(row => row._deleted);
+      const rowsToUpdate = allEditedData.filter(row => !row._deleted);
+      const rowsToDelete = allEditedData.filter(row => row._deleted);
       
       // อัพเดทข้อมูล
       if (rowsToUpdate.length > 0) {
@@ -287,6 +302,7 @@ export default function Dashboard() {
       // ออกจาก edit mode หลังจากรีเฟรชข้อมูลเสร็จแล้ว
       setIsEditMode(false);
       setEditTable([]);
+      setEditStatesByPage({});
 
       // แสดง toast notification สำเร็จ
       showToastMessage("success", "บันทึกข้อมูลสำเร็จ!");
@@ -315,9 +331,15 @@ export default function Dashboard() {
     key: keyof FormItemData,
     value: string | number
   ) => {
-    setEditTable((prev) =>
-      prev.map((row, idx) => (idx === rowIdx ? { ...row, [key]: value } : row))
-    );
+    setEditTable((prev) => {
+      const updated = prev.map((row, idx) => (idx === rowIdx ? { ...row, [key]: value } : row));
+      // อัพเดท editStatesByPage สำหรับหน้าปัจจุบัน
+      setEditStatesByPage(prevStates => ({
+        ...prevStates,
+        [page]: updated
+      }));
+      return updated;
+    });
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -477,6 +499,23 @@ export default function Dashboard() {
         );
         setData(response.data.data);
         setTotal(response.data.total || 0);
+        
+        // ถ้าอยู่ใน edit mode ให้ตรวจสอบว่ามี edit state สำหรับหน้านี้หรือไม่
+        if (isEditMode) {
+          const existingEditState = editStatesByPage[page];
+          if (existingEditState) {
+            // ใช้ edit state ที่มีอยู่แล้ว (เก็บสถานะการลบไว้)
+            setEditTable(existingEditState);
+          } else {
+            // สร้าง edit state ใหม่สำหรับหน้านี้
+            const newEditState = JSON.parse(JSON.stringify(response.data.data));
+            setEditTable(newEditState);
+            setEditStatesByPage(prev => ({
+              ...prev,
+              [page]: newEditState
+            }));
+          }
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -484,7 +523,7 @@ export default function Dashboard() {
       }
     };
     fetchData();
-  }, [page, actualSearchQuery, actualStartDate, actualEndDate, selectedTopic]);
+  }, [page, actualSearchQuery, actualStartDate, actualEndDate, selectedTopic, isEditMode]);
 
   const handleAddTopic = async (topicName: string) => {
     setAddTopicLoading(true);
@@ -647,9 +686,17 @@ export default function Dashboard() {
       ) : (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-12">
           {/* Header Section */}
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
-            <p className="text-gray-400">จัดการข้อมูลสินค้าและคำสั่งซื้อ</p>
+          <div className="text-center">
+    
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-2 sm:mb-4">
+              Dashboard 
+            </h1>
+            <p className="text-slate-400 light:text-gray-700 text-base sm:text-lg lg:text-xl max-w-2xl mx-auto transition-colors duration-300 px-4">
+              จัดการข้อมูลสินค้าและคำสั่งซื้อ พร้อมระบบวิเคราะห์แบบเรียลไทม์
+            </p>
+            <div className="mt-4 sm:mt-6 flex justify-center">
+              <div className="h-1 w-24 sm:w-32 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
+            </div>
           </div>
 
           {/* Topic Selection */}
@@ -820,7 +867,24 @@ export default function Dashboard() {
               />
 
               {/* Stats Cards */}
-              <StatsCards total={total} page={page} totalPages={totalPages} />
+              <StatsCards 
+                total={isEditMode ? (() => {
+                  // คำนวณจำนวนรายการที่ถูกลบในทุกหน้า
+                  const totalDeleted = Object.values(editStatesByPage).reduce((sum, pageData) => {
+                    return sum + pageData.filter(item => item._deleted).length;
+                  }, 0);
+                  return total - totalDeleted;
+                })() : total} 
+                page={page} 
+                totalPages={isEditMode ? (() => {
+                  // คำนวณจำนวนหน้าทั้งหมดตามจำนวนรายการที่เหลือ
+                  const totalDeleted = Object.values(editStatesByPage).reduce((sum, pageData) => {
+                    return sum + pageData.filter(item => item._deleted).length;
+                  }, 0);
+                  const effectiveTotal = total - totalDeleted;
+                  return Math.ceil(effectiveTotal / pageSize);
+                })() : totalPages} 
+              />
 
               {/* แสดง DataTable เสมอเมื่ออยู่ใน edit mode หรือมีข้อมูล */}
               {(data.length > 0 || isEditMode ) ? (
@@ -840,12 +904,28 @@ export default function Dashboard() {
                     onAddRow={handleAddRow}
                     onEditCell={handleEditCell}
                     onDeleteRowInEditMode={id => {
-                      setEditTable(prev => prev.map(item => 
-                        item.id === id ? {...item, _deleted: true} : item
-                      ));
+                      setEditTable(prev => {
+                        const updated = prev.map(item => 
+                          item.id === id ? {...item, _deleted: true} : item
+                        );
+                        // อัพเดท editStatesByPage สำหรับหน้าปัจจุบัน
+                        setEditStatesByPage(prevStates => ({
+                          ...prevStates,
+                          [page]: updated
+                        }));
+                        return updated;
+                      });
                     }}
                     onAddToEditTable={item => {
-                      setEditTable(prev => [...prev, item]);
+                      setEditTable(prev => {
+                        const updated = [...prev, item];
+                        // อัพเดท editStatesByPage สำหรับหน้าปัจจุบัน
+                        setEditStatesByPage(prevStates => ({
+                          ...prevStates,
+                          [page]: updated
+                        }));
+                        return updated;
+                      });
                     }}
                     onStartDateChange={handleStartDateChange}
                     onEndDateChange={handleEndDateChange}
@@ -855,13 +935,18 @@ export default function Dashboard() {
                     setSortConfig={setSortConfig}
                   />
 
-                  {!isEditMode && (
-                    <Pagination
-                      currentPage={page}
-                      totalPages={totalPages}
-                      onPageChange={setPage}
-                    />
-                  )}
+                  <Pagination
+                    currentPage={page}
+                    totalPages={isEditMode ? (() => {
+                      // คำนวณจำนวนหน้าทั้งหมดตามจำนวนรายการที่เหลือ
+                      const totalDeleted = Object.values(editStatesByPage).reduce((sum, pageData) => {
+                        return sum + pageData.filter(item => item._deleted).length;
+                      }, 0);
+                      const effectiveTotal = total - totalDeleted;
+                      return Math.ceil(effectiveTotal / pageSize);
+                    })() : totalPages}
+                    onPageChange={setPage}
+                  />
                 </>
               ) : (
                 <EmptyState onAddData={handleAddRow} />

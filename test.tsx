@@ -18,7 +18,7 @@ import EmptyState from "@/app/component/EmptyState/EmptyState";
 // Configure axios to include credentials (cookies) with all requests
 axios.defaults.withCredentials = true;
 
-interface FormData {
+interface FormItemData {
   id: string;
   created_at: string;
   date: string;
@@ -54,21 +54,16 @@ export default function Dashboard() {
   const handleCancelEdit = () => {
     setIsEditMode(false);
     setEditTable([]);
-    setEditModeTotal(0);
   };
-  const [data, setData] = useState<FormData[]>([]);
+  const [data, setData] = useState<FormItemData[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [editModeTotal, setEditModeTotal] = useState(0); // จำนวนรายการในโหมดแก้ไข
   const pageSize = 10;
   const totalPages = Math.ceil(total / pageSize);
-  const [addTopicLoading, setAddTopicLoading] = useState(false);
-  const [editTopicLoading, setEditTopicLoading] = useState(false);
-  const [deleteTopicLoading, setDeleteTopicLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saveLoading, setSaveLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editTable, setEditTable] = useState<FormData[]>([]);
+  const [editTable, setEditTable] = useState<FormItemData[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [actualSearchQuery, setActualSearchQuery] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -77,12 +72,16 @@ export default function Dashboard() {
   const [actualEndDate, setActualEndDate] = useState("");
   const [sortConfig, setSortConfig] = useState<
     Array<{
-      key: keyof FormData | "total";
+      key: keyof FormItemData | "total";
       direction: "asc" | "desc";
     }>
   >([]);
   const [showTopicChangeConfirm, setShowTopicChangeConfirm] = useState(false);
   const [pendingTopic, setPendingTopic] = useState<string>("");
+
+  const [addTopicLoading, setAddTopicLoading] = useState(false);
+  const [editTopicLoading, setEditTopicLoading] = useState(false);
+  const [deleteTopicLoading, setDeleteTopicLoading] = useState(false);
 
   const showToastMessage = (type: "success" | "error", message: string) => {
     setToastType(type);
@@ -177,7 +176,7 @@ export default function Dashboard() {
     } catch (err: unknown) {
       console.error("Add error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการเพิ่มข้อมูล";
-      if (typeof err === 'object' && err !== null) {
+      if (typeof err === "object" && err !== null) {
         const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
         if (e.response?.status === 401) {
           errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
@@ -220,7 +219,7 @@ export default function Dashboard() {
     } catch (err: unknown) {
       console.error("Delete error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการลบข้อมูล";
-      if (typeof err === 'object' && err !== null) {
+      if (typeof err === "object" && err !== null) {
         const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
         if (e.response?.status === 401) {
           errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
@@ -244,34 +243,37 @@ export default function Dashboard() {
     }
     setIsEditMode(true);
     setEditTable(JSON.parse(JSON.stringify(data)));
-    setEditModeTotal(total); // เก็บจำนวนรายการเดิม
   };
 
   const handleSaveAll = async () => {
     try {
       setSaveLoading(true);
       
-      // หาข้อมูลที่ถูกลบออก (มีเครื่องหมาย _deleted)
-      const deletedItems = editTable.filter(item => item._deleted);
-
-      // ลบข้อมูลที่ถูกลบออก
-      await Promise.all(
-        deletedItems.map((item) => axios.delete(`/api/form/${item.id}`))
-      );
-
-      // อัปเดตข้อมูลที่เหลือ (ไม่รวมที่ถูกลบ)
-      const itemsToUpdate = editTable.filter(row => !row._deleted);
-      await Promise.all(
-        itemsToUpdate.map((row) =>
-          axios.patch(`/api/form/${row.id}`, {
-            date: row.date,
-            product_name: row.product_name,
-            color: row.color,
-            amount: row.amount,
-            unit: row.unit,
-          })
-        )
-      );
+      // แยกข้อมูลที่ต้องอัพเดทและลบ
+      const rowsToUpdate = editTable.filter(row => !row._deleted);
+      const rowsToDelete = editTable.filter(row => row._deleted);
+      
+      // อัพเดทข้อมูล
+      if (rowsToUpdate.length > 0) {
+        await Promise.all(
+          rowsToUpdate.map((row) =>
+            axios.patch(`/api/form/${row.id}`, {
+              date: row.date,
+              product_name: row.product_name,
+              color: row.color,
+              amount: row.amount,
+              unit: row.unit,
+            })
+          )
+        );
+      }
+      
+      // ลบข้อมูล
+      if (rowsToDelete.length > 0) {
+        await Promise.all(
+          rowsToDelete.map((row) => axios.delete(`/api/form/${row.id}`))
+        );
+      }
 
       setLoading(true);
       const response = await axios.get(
@@ -281,27 +283,17 @@ export default function Dashboard() {
       );
       setData(response.data.data);
       setTotal(response.data.total || 0);
+      
+      // ออกจาก edit mode หลังจากรีเฟรชข้อมูลเสร็จแล้ว
       setIsEditMode(false);
-      setEditModeTotal(0);
+      setEditTable([]);
 
       // แสดง toast notification สำเร็จ
-      const deletedCount = deletedItems.length;
-      const updatedCount = itemsToUpdate.length;
-      let successMessage = "บันทึกข้อมูลสำเร็จ!";
-      
-      if (deletedCount > 0 && updatedCount > 0) {
-        successMessage = `อัปเดต ${updatedCount} รายการ และลบ ${deletedCount} รายการสำเร็จ!`;
-      } else if (deletedCount > 0) {
-        successMessage = `ลบ ${deletedCount} รายการสำเร็จ!`;
-      } else if (updatedCount > 0) {
-        successMessage = `อัปเดต ${updatedCount} รายการสำเร็จ!`;
-      }
-      
-      showToastMessage("success", successMessage);
+      showToastMessage("success", "บันทึกข้อมูลสำเร็จ!");
     } catch (err: unknown) {
       console.error("Save error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการบันทึกข้อมูล";
-      if (typeof err === 'object' && err !== null) {
+      if (typeof err === "object" && err !== null) {
         const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
         if (e.response?.status === 401) {
           errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
@@ -318,50 +310,14 @@ export default function Dashboard() {
     }
   };
 
-  const handleEditCell = (rowIdx: number, key: keyof FormData, value: string | number) => {
+  const handleEditCell = (
+    rowIdx: number,
+    key: keyof FormItemData,
+    value: string | number
+  ) => {
     setEditTable((prev) =>
       prev.map((row, idx) => (idx === rowIdx ? { ...row, [key]: value } : row))
     );
-  };
-
-  // ฟังก์ชันใหม่สำหรับลบข้อมูลใน edit mode (ลบเฉพาะใน frontend)
-  const handleDeleteRowInEditMode = (id: string) => {
-    setEditTable((prev) => {
-      // แทนที่จะลบออก ให้ทำเครื่องหมายว่าถูกลบแล้ว
-      const updated = prev.map(row => 
-        row.id === id ? { ...row, _deleted: true } : row
-      );
-      
-      // ถ้าไม่มีรายการนี้ใน editTable ให้เพิ่มเข้าไปพร้อมกับเครื่องหมายลบ
-      if (!prev.find(row => row.id === id)) {
-        const originalItem = data.find(item => item.id === id);
-        if (originalItem) {
-          updated.push({ ...originalItem, _deleted: true });
-        }
-      }
-      
-      return updated;
-    });
-    
-    // อัปเดตจำนวนรายการทั้งหมดในโหมดแก้ไข
-    const newEditModeTotal = editModeTotal - 1;
-    setEditModeTotal(newEditModeTotal);
-    
-    // ถ้าหน้าปัจจุบันไม่มีข้อมูลแล้ว ให้ย้ายไปหน้าก่อนหน้า
-    const newTotalPages = Math.ceil(newEditModeTotal / pageSize);
-    if (page > newTotalPages && newTotalPages > 0) {
-      setPage(newTotalPages);
-    }
-  };
-
-  // ฟังก์ชันสำหรับเพิ่มข้อมูลเข้า editTable
-  const handleAddToEditTable = (item: FormData) => {
-    setEditTable((prev) => {
-      if (!prev.find(row => row.id === item.id)) {
-        return [...prev, item];
-      }
-      return prev;
-    });
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -396,7 +352,7 @@ export default function Dashboard() {
     setEndDate(e.target.value);
   };
 
-  const handleSort = (key: keyof FormData | "total") => {
+  const handleSort = (key: keyof FormItemData | "total") => {
     setSortConfig((prevConfig) => {
       // ถ้าไม่มี sort หรือเลือกคอลัมน์ใหม่ ให้เริ่มต้นใหม่
       if (prevConfig.length === 0 || prevConfig[0].key !== key) {
@@ -414,7 +370,7 @@ export default function Dashboard() {
     });
   };
 
-  const getSortIcon = (columnKey: keyof FormData | "total") => {
+  const getSortIcon = (columnKey: keyof FormItemData | "total") => {
     const sortItem = sortConfig.find((config) => config.key === columnKey);
 
     if (!sortItem) {
@@ -506,13 +462,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     // โหลดข้อมูล form เมื่อเลือก topic แล้ว
-    if (!selectedTopic) {
-      setData([]);
-      setTotal(0);
-      return;
-    }
-
     const fetchData = async () => {
+      if (!selectedTopic) {
+        setData([]);
+        setTotal(0);
+        return;
+      }
       setLoading(true);
       try {
         const response = await axios.get(
@@ -542,7 +497,7 @@ export default function Dashboard() {
     } catch (err: unknown) {
       console.error("Add topic error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการเพิ่มหัวข้อ";
-      if (typeof err === 'object' && err !== null) {
+      if (typeof err === "object" && err !== null) {
         const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
         if (e.response?.status === 401) {
           errorMessage = "กรุณาเข้าสู่ระบบก่อนเพิ่มหัวข้อ";
@@ -571,7 +526,7 @@ export default function Dashboard() {
     } catch (err: unknown) {
       console.error("Edit topic error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการแก้ไขหัวข้อ";
-      if (typeof err === 'object' && err !== null) {
+      if (typeof err === "object" && err !== null) {
         const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
         if (e.response?.status === 401) {
           errorMessage = "กรุณาเข้าสู่ระบบก่อนแก้ไขหัวข้อ";
@@ -606,8 +561,7 @@ export default function Dashboard() {
     } catch (err: unknown) {
       console.error("Delete topic error:", err);
       let errorMessage = "เกิดข้อผิดพลาดในการลบหัวข้อ";
-      
-      if (typeof err === 'object' && err !== null) {
+      if (typeof err === "object" && err !== null) {
         const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
         if (e.response?.status === 401) {
           errorMessage = "กรุณาเข้าสู่ระบบก่อนลบหัวข้อ";
@@ -617,7 +571,6 @@ export default function Dashboard() {
           errorMessage = e.message;
         }
       }
-      
       showToastMessage("error", errorMessage);
     } finally {
       setDeleteTopicLoading(false);
@@ -625,7 +578,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 light:from-gray-100 light:via-gray-50 light:to-slate-100 transition-all duration-300 text-base md:text-lg">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       <Navbar />
 
       {/* Popup แจ้งเตือนเปลี่ยนหัวข้อ */}
@@ -694,15 +647,58 @@ export default function Dashboard() {
       ) : (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 pb-12">
           {/* Header Section */}
-          <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-6 shadow-lg">
-            <span className="text-4xl">📦</span>
-          </div>
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent mb-4">Dashboard</h1>
-          <p className="text-slate-400 light:text-gray-700 text-xl max-w-2xl mx-auto transition-colors duration-300">จัดการข้อมูลสินค้าและคำสั่งซื้ออย่างมีประสิทธิภาพ</p>
-          <div className="mt-6 flex justify-center">
-            <div className="h-1 w-32 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"></div>
-          </div>
+          <div className="text-center mb-8">
+            <div className="relative inline-block">
+              {/* Decorative background */}
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-blue-500/20 dark:from-blue-400/30 dark:via-purple-400/30 dark:to-blue-400/30 blur-2xl transform -rotate-6"></div>
+              
+              {/* Main content */}
+              <div className="relative bg-white/5 dark:bg-white/5 backdrop-blur-sm border border-white/10 dark:border-white/20 rounded-2xl px-8 py-6 shadow-2xl">
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  {/* Dashboard icon */}
+                  <div className="bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-400 dark:to-purple-500 p-3 rounded-xl shadow-lg">
+                    <svg
+                      className="w-8 h-8 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      />
+                    </svg>
+                  </div>
+                  
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-white dark:from-gray-100 dark:via-white dark:to-gray-100 bg-clip-text text-transparent">
+                    Dashboard
+                  </h1>
+                </div>
+                
+                <p className="text-gray-300 dark:text-gray-300 text-lg font-medium">
+                  จัดการข้อมูลสินค้าและคำสั่งซื้อ
+                </p>
+                
+                {/* Decorative elements */}
+                <div className="flex justify-center gap-2 mt-4">
+                  <div className="w-2 h-2 bg-blue-400 dark:bg-blue-300 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-purple-400 dark:bg-purple-300 rounded-full animate-pulse delay-100"></div>
+                  <div className="w-2 h-2 bg-blue-400 dark:bg-blue-300 rounded-full animate-pulse delay-200"></div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Welcome message for authenticated users */}
+            {user && (
+              <div className="mt-6 inline-flex items-center gap-2 bg-green-500/10 dark:bg-green-400/10 border border-green-500/20 dark:border-green-400/20 rounded-full px-4 py-2 backdrop-blur-sm">
+                <div className="w-2 h-2 bg-green-400 dark:bg-green-300 rounded-full animate-pulse"></div>
+                <span className="text-green-300 dark:text-green-200 text-sm font-medium">
+                  ยินดีต้อนรับเข้าสู่ระบบ
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Topic Selection */}
@@ -731,10 +727,10 @@ export default function Dashboard() {
                 title="เพิ่มข้อมูลใหม่"
                 isLoading={loading}
               >
-                <div className="space-y-6">
+                <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 light:text-neutral-700 mb-2">
-                    <span className="text-base md:text-lg font-semibold">วันที่</span>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      วันที่
                     </label>
                     <input
                       type="date"
@@ -745,13 +741,13 @@ export default function Dashboard() {
                           date: e.target.value,
                         })
                       }
-                      className="w-full bg-gray-800/80 light:bg-gray-50/90 border border-gray-600/50 light:border-gray-300 rounded-xl px-4 py-3 text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 backdrop-blur-sm text-base md:text-lg"
+                      className="w-full bg-gray-800/80 border border-gray-600/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 backdrop-blur-sm"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 light:text-gray-700 mb-2">
-                    <span className="text-base md:text-lg font-semibold">ชื่อสินค้า</span>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      ชื่อสินค้า
                     </label>
                     <input
                       type="text"
@@ -765,18 +761,18 @@ export default function Dashboard() {
                           });
                         }
                       }}
-                      className="w-full bg-gray-800/80 light:bg-gray-50/90 border border-gray-600/50 light:border-gray-300 rounded-xl px-4 py-3 text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 backdrop-blur-sm text-base md:text-lg"
+                      className="w-full bg-gray-800/80 border border-gray-600/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 backdrop-blur-sm"
                       placeholder="ระบุชื่อสินค้า"
                       maxLength={30}
                     />
-                    <div className="text-xs text-gray-400 light:text-gray-600 mt-1">
-                      <span className="text-sm md:text-base">{newRowData.product_name.length}/30 ตัวอักษร</span>
+                    <div className="text-xs text-gray-400 mt-1">
+                      {newRowData.product_name.length}/30 ตัวอักษร
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 light:text-gray-700 mb-2">
-                    <span className="text-base md:text-lg font-semibold">สี</span>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      สี
                     </label>
                     <input
                       type="text"
@@ -790,19 +786,19 @@ export default function Dashboard() {
                           });
                         }
                       }}
-                      className="w-full bg-gray-800/80 light:bg-gray-50/90 border border-gray-600/50 light:border-gray-300 rounded-xl px-4 py-3 text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 backdrop-blur-sm text-base md:text-lg"
+                      className="w-full bg-gray-800/80 border border-gray-600/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 backdrop-blur-sm"
                       placeholder="ระบุสี"
                       maxLength={30}
                     />
-                    <div className="text-xs text-gray-400 light:text-gray-600 mt-1">
-                      <span className="text-sm md:text-base">{newRowData.color.length}/30 ตัวอักษร</span>
+                    <div className="text-xs text-gray-400 mt-1">
+                      {newRowData.color.length}/30 ตัวอักษร
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 light:text-gray-700 mb-2">
-                        <span className="text-base md:text-lg font-semibold">จำนวนเงิน</span>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        จำนวน
                       </label>
                       <input
                         type="number"
@@ -817,7 +813,7 @@ export default function Dashboard() {
                             });
                           }
                         }}
-                        className="w-full bg-gray-800/80 light:bg-gray-50/90 border border-gray-600/50 light:border-gray-300 rounded-xl px-4 py-3 text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 backdrop-blur-sm text-base md:text-lg"
+                        className="w-full bg-gray-800/80 border border-gray-600/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 backdrop-blur-sm"
                         min="0"
                         max="999999999"
                         placeholder="0"
@@ -825,8 +821,8 @@ export default function Dashboard() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 light:text-gray-700 mb-2">
-                        <span className="text-base md:text-lg font-semibold">หน่วย</span>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        หน่วย
                       </label>
                       <input
                         type="number"
@@ -841,7 +837,7 @@ export default function Dashboard() {
                             });
                           }
                         }}
-                        className="w-full bg-gray-800/80 light:bg-gray-50/90 border border-gray-600/50 light:border-gray-300 rounded-xl px-4 py-3 text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 backdrop-blur-sm text-base md:text-lg"
+                        className="w-full bg-gray-800/80 border border-gray-600/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 backdrop-blur-sm"
                         min="0"
                         max="999999999"
                         placeholder="0"
@@ -849,11 +845,11 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                  <div className="bg-gray-800/80 light:bg-gray-100/80 rounded-lg p-3 border border-gray-600/50 light:border-gray-300 backdrop-blur-sm">
-                    <p className="text-lg md:text-xl text-gray-300 light:text-gray-700 font-bold">
+                  <div className="bg-gray-800/80 rounded-lg p-3 border border-gray-600/50 backdrop-blur-sm">
+                    <p className="text-sm text-gray-300">
                       รวม:{" "}
-                      <span className="text-green-400 light:text-green-600 font-extrabold">
-                        {newRowData.amount * newRowData.unit}
+                      <span className="text-green-400 font-semibold">
+                        {Math.floor(newRowData.amount * newRowData.unit)}
                       </span>
                     </p>
                   </div>
@@ -873,13 +869,10 @@ export default function Dashboard() {
               />
 
               {/* Stats Cards */}
-              <StatsCards 
-              total={isEditMode ? editModeTotal : total} 
-              page={page} 
-              totalPages={isEditMode ? Math.ceil(editModeTotal / pageSize) : totalPages} 
-            />
+              <StatsCards total={total} page={page} totalPages={totalPages} />
 
-              {(isEditMode ? editModeTotal > 0 : data.length > 0) ? (
+              {/* แสดง DataTable เสมอเมื่ออยู่ใน edit mode หรือมีข้อมูล */}
+              {(data.length > 0 || isEditMode ) ? (
                 <>
                   <DataTable
                     data={data}
@@ -895,21 +888,29 @@ export default function Dashboard() {
                     onCancelEdit={handleCancelEdit}
                     onAddRow={handleAddRow}
                     onEditCell={handleEditCell}
-                    onDeleteRowInEditMode={handleDeleteRowInEditMode}
+                    onDeleteRowInEditMode={id => {
+                      setEditTable(prev => prev.map(item => 
+                        item.id === id ? {...item, _deleted: true} : item
+                      ));
+                    }}
+                    onAddToEditTable={item => {
+                      setEditTable(prev => [...prev, item]);
+                    }}
                     onStartDateChange={handleStartDateChange}
                     onEndDateChange={handleEndDateChange}
                     onApplyDateFilter={handleApplyDateFilter}
                     onClearDateFilter={handleClearDateFilter}
                     getSortIcon={getSortIcon}
                     setSortConfig={setSortConfig}
-                    onAddToEditTable={handleAddToEditTable}
                   />
 
-                  <Pagination
-                    currentPage={page}
-                    totalPages={isEditMode ? Math.ceil(editModeTotal / pageSize) : totalPages}
-                    onPageChange={setPage}
-                  />
+                  {!isEditMode && (
+                    <Pagination
+                      currentPage={page}
+                      totalPages={totalPages}
+                      onPageChange={setPage}
+                    />
+                  )}
                 </>
               ) : (
                 <EmptyState onAddData={handleAddRow} />

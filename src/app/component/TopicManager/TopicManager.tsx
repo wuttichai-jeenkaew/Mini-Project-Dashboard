@@ -151,7 +151,7 @@ const TopicManager: React.FC<TopicManagerProps> = ({
       {/* Modal เพิ่มหัวข้อ */}
       {showAddTopic && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-gray-900 rounded-lg p-6 shadow-xl w-full max-w-md">
+          <div className="bg-gray-900 lightmode-bg rounded-lg p-6 shadow-xl w-full max-w-md">
             <h3 className="text-lg font-bold text-white mb-4">เพิ่มหัวข้อใหม่</h3>
             <input
               type="text"
@@ -162,7 +162,7 @@ const TopicManager: React.FC<TopicManagerProps> = ({
                   setNewTopicName(value);
                 }
               }}
-              className="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full bg-gray-800 lightmode-bg border border-gray-600 rounded px-3 py-2 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="ชื่อหัวข้อ"
               maxLength={30}
               disabled={addTopicLoading}
@@ -195,7 +195,7 @@ const TopicManager: React.FC<TopicManagerProps> = ({
       {/* Modal แก้ไขหัวข้อ */}
       {showEditTopic && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-gray-900 rounded-lg p-6 shadow-xl w-full max-w-md">
+          <div className="bg-gray-900 lightmode-bg rounded-lg p-6 shadow-xl w-full max-w-md">
             <h3 className="text-lg font-bold text-white mb-4">แก้ไขหัวข้อ</h3>
             <input
               type="text"
@@ -206,7 +206,7 @@ const TopicManager: React.FC<TopicManagerProps> = ({
                   setEditTopicName(value);
                 }
               }}
-              className="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+              className="w-full bg-gray-80 lightmode-bg border border-gray-600 rounded px-3 py-2 text-white mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-500"
               placeholder="ชื่อหัวข้อ"
               maxLength={30}
               disabled={editTopicLoading}
@@ -216,7 +216,7 @@ const TopicManager: React.FC<TopicManagerProps> = ({
             </div>
             <div className="flex justify-end gap-2">
               <button
-                className="px-4 py-2 bg-gradient-to-r from-gray-600/80 to-gray-700/80 backdrop-blur-sm text-white rounded-lg hover:from-gray-700/90 hover:to-gray-800/90 transition-all duration-200 shadow-lg hover:shadow-xl border border-gray-500/30"
+                className="px-4 py-2 bg-gradient-to-r from-gray-600/80 to-gray-700/80 backdrop-blur-sm lightmode-bg text-white rounded-lg hover:from-gray-700/90 hover:to-gray-800/90 transition-all duration-200 shadow-lg hover:shadow-xl border border-gray-500/30"
                 onClick={() => {
                   setShowEditTopic(false);
                   setEditTopicId("");
@@ -243,7 +243,7 @@ const TopicManager: React.FC<TopicManagerProps> = ({
       {/* Modal ลบหัวข้อ */}
       {showDeleteTopic && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-gray-900 rounded-lg p-6 shadow-xl w-full max-w-md">
+          <div className="bg-gray-900 lightmode-bg rounded-lg p-6 shadow-xl w-full max-w-md">
             <h3 className="text-lg font-bold text-white mb-4">ลบหัวข้อ</h3>
             <p className="text-gray-300 mb-4">
               คุณต้องการลบหัวข้อ <span className="font-semibold text-white">&quot;{deleteTopicName}&quot;</span> หรือไม่?

@@ -72,14 +72,14 @@ export default function Navbar() {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-4">
             <button
-              onClick={() => router.push("/dashboard")}
+              onClick={() => router.push("/pages/dashboard")}
               className="flex items-center gap-2 text-gray-800 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 px-4 py-2 rounded-lg text-base font-bold transition-all duration-200 hover:bg-blue-50 dark:hover:bg-blue-400/10 shadow-md"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h18v18H3V3zm3 3v12h12V6H6z" /></svg>
               Dashboard
             </button>
             <button
-              onClick={() => router.push("/dashboard/graph")}
+              onClick={() => router.push("/pages/dashboard/graph")}
               className="flex items-center gap-2 text-gray-800 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 px-4 py-2 rounded-lg text-base font-bold transition-all duration-200 hover:bg-purple-50 dark:hover:bg-purple-400/10 shadow-md"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 17v-2a4 4 0 014-4h10a4 4 0 014 4v2" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 9V7a5 5 0 0110 0v2" /></svg>

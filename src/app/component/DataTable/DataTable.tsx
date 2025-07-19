@@ -177,25 +177,27 @@ const DataTable: React.FC<DataTableProps> = ({
               ล้างการกรอง
             </button>
           )}
-          <button
-            className="px-3 py-1.5 bg-gradient-to-r from-blue-600/80 to-blue-700/80 light:from-blue-500 light:to-blue-600 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-blue-700/90 hover:to-blue-800/90 light:hover:from-blue-600 light:hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl border border-blue-500/30 light:border-blue-400/50 flex items-center gap-1 text-sm"
-            onClick={onAddRow}
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          {!isEditMode && (
+            <button
+              className="px-3 py-1.5 bg-gradient-to-r from-blue-600/80 to-blue-700/80 light:from-blue-500 light:to-blue-600 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-blue-700/90 hover:to-blue-800/90 light:hover:from-blue-600 light:hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl border border-blue-500/30 light:border-blue-400/50 flex items-center gap-1 text-sm"
+              onClick={onAddRow}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-              />
-            </svg>
-            เพิ่มข้อมูล
-          </button>
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              เพิ่มข้อมูล
+            </button>
+          )}
           {!isEditMode && (
             <button
               className="px-3 py-1.5 bg-gradient-to-r from-emerald-600/80 to-emerald-700/80 light:from-emerald-500 light:to-emerald-600 backdrop-blur-sm text-white rounded-lg font-semibold hover:from-emerald-700/90 hover:to-emerald-800/90 light:hover:from-emerald-600 light:hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl border border-emerald-500/30 light:border-emerald-400/50 flex items-center gap-1 text-sm"
