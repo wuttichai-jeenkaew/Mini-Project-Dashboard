@@ -72,18 +72,18 @@ export default function LoginPage() {
   };
 
   return (
-    <>
+    <div className="flex flex-col h-screen overflow-hidden">
       <Navbar />
       {/* Show loading screen while checking auth */}
       {loading && (
-        <div className="min-h-screen flex items-center justify-center bg-gray-900 lightmode-auth-loading">
+        <div className="flex-1 flex items-center justify-center bg-gray-900 lightmode-auth-loading">
           <div className="text-white text-lg lightmode-auth-loading-text">กำลังโหลด...</div>
         </div>
       )}
 
       {/* Show login form only if not loading and not authenticated */}
       {!loading && !user && (
-        <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-black lightmode-auth-bg">
+        <div className="flex-1 flex items-center relative bg-gradient-to-br from-gray-900 via-gray-800 to-black lightmode-auth-bg">
       {/* Animated background elements */}
       <div className="absolute inset-0 w-full h-full overflow-hidden">
         {/* Floating geometric shapes */}
@@ -137,7 +137,7 @@ export default function LoginPage() {
         ></div>
       </div>
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+      <div className="relative z-10 flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           {/* Logo/Brand area */}
           <div className="text-center mb-8">
@@ -353,9 +353,9 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-      </div>
+          </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
