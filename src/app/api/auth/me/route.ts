@@ -11,7 +11,7 @@ export async function GET() {
   try {
     // Get user profile from database
   const { data: profile } = await supabase
-    .from('profiles')
+    .from('user_profile') // Assuming the table is named 'user_profiles'
     .select('*')
     .eq('id', user.id)
     .single();
@@ -19,7 +19,7 @@ export async function GET() {
     const userData = {
       id: user!.id,
       email: user!.email,
-      name: profile?.name || null
+      name: profile?.name || null,
     };
 
     return NextResponse.json({
