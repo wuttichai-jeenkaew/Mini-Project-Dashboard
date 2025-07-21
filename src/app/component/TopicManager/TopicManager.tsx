@@ -96,7 +96,7 @@ const TopicManager: React.FC<TopicManagerProps> = ({
                   <select
                     value={selectedTopic}
                     onChange={(e) => onTopicChange(e.target.value)}
-                    className="w-full bg-gray-800/50 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent lightmode-select"
+                    className="w-full bg-gray-800/80 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent lightmode-select"
                   >
                     <option value="">เลือกหัวข้อ...</option>
                     {topics.map((topic) => (

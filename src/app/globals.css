@@ -42,7 +42,18 @@ html.light .lightmode-table-bg {
 /* Fallback for DataTable thead background in light mode */
 html.light .lightmode-bg {
   background-color: #f3f4f6 !important;
+
 }
+
+้html.light .lightmode-bg:hover {
+  background-color: #e5e7eb !important; /* gray-200 */
+}
+
+html.light .lightmode-border {
+  border-color: #e5e7eb !important; /* gray-200 */
+}
+
+
 
 /* Authentication Pages Light Mode Styles */
 html.light .lightmode-auth-bg {

@@ -64,6 +64,16 @@ const DataTable: React.FC<DataTableProps> = ({
   setSortConfig,
   onAddToEditTable,
 }) => {
+  const formatThaiDate = (dateString: string) => {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
+  };
   const sortData = (dataToSort: FormItemData[]) => {
     if (sortConfig.length === 0) return dataToSort;
 
@@ -420,7 +430,7 @@ const DataTable: React.FC<DataTableProps> = ({
                           onChange={(e) => onEditCell(getEditIndex(item.id), "date", e.target.value)}
                         />
                       ) : (
-                        item.date
+                        formatThaiDate(item.date)
                       )}
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">

@@ -3,6 +3,7 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 import Navbar from "@/app/component/Navbar/Navbar";
+import AutoCompleteDropdown from "@/app/component/AutoCompleteDropdown/AutoCompleteDropdown";
 import { useAuth } from "@/app/context/useAuth";
 import ConfirmPopup from "@/app/component/Popup/ConfirmPopup";
 import FormPopup from "@/app/component/Popup/FormPopup";
@@ -35,6 +36,17 @@ interface TopicData {
 }
 
 export default function Dashboard() {
+  const formatThaiDate = (dateString: string) => {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
+  };
+
   const [showLoginPopup, setShowLoginPopup] = useState(false);
   const { user } = useAuth();
   const [topics, setTopics] = useState<TopicData[]>([]);
@@ -138,8 +150,9 @@ export default function Dashboard() {
       return;
     }
     setShowAddForm(true);
+    const today = new Date().toISOString().split("T")[0];
     setNewRowData({
-      date: new Date().toISOString().split("T")[0],
+      date: today,
       product_name: "",
       color: "",
       amount: 0,
@@ -747,21 +760,14 @@ export default function Dashboard() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       ชื่อสินค้า
                     </label>
-                    <input
-                      type="text"
+                    {/* Custom AutoCompleteDropdown for product_name */}
+                    <AutoCompleteDropdown
                       value={newRowData.product_name}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value.length <= 30) {
-                          setNewRowData({
-                            ...newRowData,
-                            product_name: value,
-                          });
-                        }
-                      }}
-                      className="w-full bg-gray-800/80 border border-gray-600/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 backdrop-blur-sm"
+                      onChange={(val: string) => setNewRowData({ ...newRowData, product_name: val })}
+                      options={Array.from(new Set(data.map(item => item.product_name).filter(Boolean)))}
                       placeholder="ระบุชื่อสินค้า"
                       maxLength={30}
+                      className="shadow-lg focus-within:ring-2 focus-within:ring-blue-500"
                     />
                     <div className="text-xs text-gray-400 mt-1">
                       {newRowData.product_name.length}/30 ตัวอักษร
@@ -772,21 +778,14 @@ export default function Dashboard() {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       สี
                     </label>
-                    <input
-                      type="text"
+                    {/* Custom AutoCompleteDropdown for color */}
+                    <AutoCompleteDropdown
                       value={newRowData.color}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        if (value.length <= 30) {
-                          setNewRowData({
-                            ...newRowData,
-                            color: value,
-                          });
-                        }
-                      }}
-                      className="w-full bg-gray-800/80 border border-gray-600/50 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 backdrop-blur-sm"
+                      onChange={(val: string) => setNewRowData({ ...newRowData, color: val })}
+                      options={Array.from(new Set(data.map(item => item.color).filter(Boolean)))}
                       placeholder="ระบุสี"
                       maxLength={30}
+                      className="shadow-lg focus-within:ring-2 focus-within:ring-blue-500"
                     />
                     <div className="text-xs text-gray-400 mt-1">
                       {newRowData.color.length}/30 ตัวอักษร
