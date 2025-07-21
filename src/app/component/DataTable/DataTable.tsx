@@ -473,20 +473,22 @@ const DataTable: React.FC<DataTableProps> = ({
                       {isEditMode ? (
                         <input
                           className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
-                          type="number"
-                          value={item.amount === 0 ? "" : item.amount}
+                          type="text"
+                          inputMode="decimal"
+                          value={item.amount === 0 ? "" : Number(item.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           onChange={(e) => {
-                            const value = e.target.value;
-                            const numValue = value === "" ? 0 : Number(value);
+                            const value = e.target.value.replace(/,/g, "");
+                            let numValue = value === "" ? 0 : Number(parseFloat(value).toFixed(2));
                             if (numValue >= 0 && numValue <= 999999999) {
                               onEditCell(getEditIndex(item.id), "amount", numValue);
                             }
                           }}
                           min="0"
                           max="999999999"
+                          step="0.01"
                         />
                       ) : (
-                        Math.floor(item.amount)
+                        Number(item.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                       )}
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
@@ -506,11 +508,16 @@ const DataTable: React.FC<DataTableProps> = ({
                           max="999999999"
                         />
                       ) : (
-                        Math.floor(item.unit)
+                        (() => {
+                          const val = Number(item.unit);
+                          return val.toLocaleString();
+                        })()
                       )}
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-green-400 light:text-green-800 transition-colors duration-200">
-                      {Math.floor(item.amount * item.unit)}
+                      {isEditMode
+                        ? Number(item.amount * item.unit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                        : Number(item.amount * item.unit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </td>
                     {isEditMode && (
                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-300 light:text-black transition-colors duration-200">
