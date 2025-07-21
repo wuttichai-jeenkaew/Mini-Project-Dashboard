@@ -478,7 +478,7 @@ const DataTable: React.FC<DataTableProps> = ({
                           value={item.amount === 0 ? "" : Number(item.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           onChange={(e) => {
                             const value = e.target.value.replace(/,/g, "");
-                            let numValue = value === "" ? 0 : Number(parseFloat(value).toFixed(2));
+                            const numValue = value === "" ? 0 : Number(parseFloat(value).toFixed(2));
                             if (numValue >= 0 && numValue <= 999999999) {
                               onEditCell(getEditIndex(item.id), "amount", numValue);
                             }
