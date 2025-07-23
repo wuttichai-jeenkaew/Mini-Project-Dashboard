@@ -473,11 +473,10 @@ const DataTable: React.FC<DataTableProps> = ({
                       {isEditMode ? (
                         <input
                           className="light:bg-gray-50 border border-gray-600 light:border-gray-300 rounded px-2 py-1 w-full text-white light:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 light:focus:ring-blue-600 text-sm transition-colors duration-200"
-                          type="text"
-                          inputMode="decimal"
-                          value={item.amount === 0 ? "" : Number(item.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          type="number"
+                          value={item.amount === 0 ? "" : item.amount}
                           onChange={(e) => {
-                            const value = e.target.value.replace(/,/g, "");
+                            const value = e.target.value;
                             const numValue = value === "" ? 0 : Number(parseFloat(value).toFixed(2));
                             if (numValue >= 0 && numValue <= 999999999) {
                               onEditCell(getEditIndex(item.id), "amount", numValue);
