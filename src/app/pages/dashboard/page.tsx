@@ -208,48 +208,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteRow = async (id: string) => {
-    if (!user) {
-      setShowLoginPopup(true);
-      return;
-    }
 
-    if (!confirm("คุณต้องการลบข้อมูลนี้หรือไม่?")) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      await axios.delete(`/api/form/${id}`);
-
-      // รีเฟรชข้อมูล
-      const response = await axios.get(
-        `/api/form?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(
-          actualSearchQuery
-        )}&topic=${selectedTopic}&startDate=${actualStartDate}&endDate=${actualEndDate}`
-      );
-      setData(response.data.data);
-      setTotal(response.data.total || 0);
-
-      showToastMessage("success", "ลบข้อมูลสำเร็จ!");
-    } catch (err: unknown) {
-      console.error("Delete error:", err);
-      let errorMessage = "เกิดข้อผิดพลาดในการลบข้อมูล";
-      if (typeof err === "object" && err !== null) {
-        const e = err as { response?: { status?: number; data?: { error?: string } }; message?: string };
-        if (e.response?.status === 401) {
-          errorMessage = "กรุณาเข้าสู่ระบบก่อนใช้งาน";
-        } else if (e.response?.data?.error) {
-          errorMessage = e.response.data.error;
-        } else if (e.message) {
-          errorMessage = e.message;
-        }
-      }
-      showToastMessage("error", errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleEditAll = () => {
     if (isEditMode) return;
@@ -277,24 +236,38 @@ export default function Dashboard() {
         allEditedData.push(...pageData);
       });
       
-      // แยกข้อมูลที่ต้องอัพเดทและลบ
-      const rowsToUpdate = allEditedData.filter(row => !row._deleted);
+      // อัพเดทเฉพาะแถวที่มีการเปลี่ยนแปลงจริง
+      const rowsToUpdate = allEditedData.filter(row => {
+        if (row._deleted) return false;
+        const original = data.find(o => o.id === row.id);
+        if (!original) return true; // ถ้าไม่มีใน data ให้ถือว่าเปลี่ยน
+        return (
+          row.date !== original.date ||
+          row.product_name !== original.product_name ||
+          row.color !== original.color ||
+          row.amount !== original.amount ||
+          row.unit !== original.unit
+        );
+      });
       const rowsToDelete = allEditedData.filter(row => row._deleted);
-      
-      // อัพเดทข้อมูล
+
       if (rowsToUpdate.length > 0) {
+        console.log("Updating rows count:", rowsToUpdate.length);
         await Promise.all(
-          rowsToUpdate.map((row) =>
-            axios.patch(`/api/form/${row.id}`, {
+          rowsToUpdate.map((row, idx) => {
+            console.log(`Patch #${idx + 1}:`, row);
+            return axios.patch(`/api/form/${row.id}`, {
               date: row.date,
               product_name: row.product_name,
               color: row.color,
               amount: row.amount,
               unit: row.unit,
-            })
-          )
+            });
+          })
         );
+        console.log("Rows updated successfully");
       }
+      
       
       // ลบข้อมูล
       if (rowsToDelete.length > 0) {

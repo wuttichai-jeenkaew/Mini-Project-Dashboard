@@ -60,6 +60,7 @@ const TopicManager: React.FC<TopicManagerProps> = ({
       setShowAddTopic(false);
     }
   };
+  
 
   const handleEditTopic = async () => {
     if (editTopicName.trim()) {
